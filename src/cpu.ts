@@ -1,4 +1,4 @@
-class CPU {
+export class CPU {
     // レジスタ定義
     memory        : Uint8Array;
     registerV     : Uint8Array;
@@ -41,19 +41,41 @@ class CPU {
     }
 
     // ROMを読み込む
-    readRom () {
+    readRom (romBuffer: Buffer<ArrayBufferLike>) {
         // 511バイトまでフォントセットを埋める
         for (let i = 0; i < this.FONTSET.length; i++) {
             this.memory[i] = this.FONTSET[i]
         }
-        // 512バイトからはROMを読み込ませる
+        // 512バイトからROMを読み込ませる
+        for (let i = 0; i < romBuffer.length; i++) {
+            this.memory[0x200 + i] = romBuffer[i];
+        }
     }
 
-    // 命令コード読み込み
-    // リトルエンディアン→ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
-    // c, k, y, d に分割する
-    // nnn と kk を抽出する
-    // 命令実行
+    // 命令コード実行
+    update () {
+        console.log('tick');
+
+        this._readOpCode();
+
+        // 0x73EE という命令コードがあるとする
+        // 73が上位バイト EEが下位バイト
+        // それぞれのうち、1つ目が上位ニブル、2つ目が下位ニブル
+
+        // c x y d に命令コードを分割
+        // c 上位バイトの上位ニブル
+        // x 上位バイトの下位ニブル
+        // y 下位バイトの上位ニブル
+        // d 下位バイトの下位ニブル
+        // kk 下位バイト
+        // nnn 下位バイトと上位の下位ニブル
+        // 命令実行
+    }
+
+    _readOpCode () {
+        // リトルエンディアン→ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
+
+    }
 
     // タイマー実装
 }
