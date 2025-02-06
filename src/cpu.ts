@@ -56,25 +56,85 @@ export class CPU {
     update () {
         console.log('tick');
 
-        this._readOpCode();
+        const opcode = this._readOpCode();
+
+        this.programCounter += 2;
+
+        // c x y d に命令コードを分割
+        // ニブルという概念を使う
 
         // 0x73EE という命令コードがあるとする
         // 73が上位バイト EEが下位バイト
         // それぞれのうち、1つ目が上位ニブル、2つ目が下位ニブル
 
-        // c x y d に命令コードを分割
         // c 上位バイトの上位ニブル
         // x 上位バイトの下位ニブル
         // y 下位バイトの上位ニブル
         // d 下位バイトの下位ニブル
         // kk 下位バイト
         // nnn 下位バイトと上位の下位ニブル
+        const c   = ((opcode & 0xF000) >> 12);
+        const x   = ((opcode & 0x0F00) >> 8);
+        const y   = ((opcode & 0x00F0) >> 4);
+        const d   = ((opcode & 0x000F) >> 0);
+        const nnn = (opcode & 0x0FFF);
+        const kk  = (opcode & 0x00FF);
+
         // 命令実行
+        const splitOpcode = {
+            c,
+            x,
+            y,
+            d,
+            nnn,
+            kk
+        };
+        this._executeOrder(splitOpcode);
     }
 
+    // プログラムカウンタから2バイト読む
     _readOpCode () {
-        // リトルエンディアン→ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
+        const ahead = this.memory[this.programCounter];
+        const back  = this.memory[this.programCounter + 1];
 
+        // ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
+        // XXYYで例える
+        // 1つ目のバイトはushortしたら00XX
+        // 2つ目のバイトはushortしたら00YY
+        // 1つ目を1バイト（8ビット）左シフトさせて論理和を取ればXXYYにできる
+        return ahead << 8 | back;
+    }
+
+    // 命令
+    _executeOrder (splitOpcode: {
+        // @TODO 型
+        c: number,
+        x: number,
+        y: number,
+        d: number,
+        nnn: number,
+        kk: number
+    }) {
+        const {
+            c,
+            x,
+            y,
+            d,
+            nnn,
+            kk
+        } = splitOpcode;
+
+        switch ([c, x, y, d].join('-')) {
+            case '0-0-E-0':
+              this._cls();
+              break;
+            default:
+              console.log(`opcode ${[c, x, y, d].join('-')}`);
+          }
+    }
+
+    _cls () {
+        // ディスプレイクリア
     }
 
     // タイマー実装
