@@ -1,15 +1,15 @@
 export class CPU {
     // レジスタ定義
-    memory        : Uint8Array;
-    registerV     : Uint8Array;
-    indexRegisterI: number;
-    programCounter: number
-    stack         : Uint16Array
-    stackPointer  : number
-    delayTimer    : number
-    soundTimer    : number
+    #memory        : Uint8Array;
+    #registerV     : Uint8Array;
+    #indexRegisterI: number;
+    #programCounter: number
+    #stack         : Uint16Array
+    #stackPointer  : number
+    #delayTimer    : number
+    #soundTimer    : number
     // フォントセット
-    FONTSET: number[] = [
+    #FONTSET: number[] = [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
         0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -30,25 +30,25 @@ export class CPU {
 
     constructor() {
         // レジスタ初期化
-        this.memory         = new Uint8Array(4096);
-        this.registerV      = new Uint8Array(16);
-        this.indexRegisterI = 0; // 16ビット
-        this.programCounter = 0x200; // プログラムは0x200から
-        this.stack          = new Uint16Array(16);
-        this.stackPointer   = 0; // 8ビット
-        this.delayTimer     = 0;
-        this.soundTimer     = 0;
+        this.#memory         = new Uint8Array(4096);
+        this.#registerV      = new Uint8Array(16);
+        this.#indexRegisterI = 0; // 16ビット
+        this.#programCounter = 0x200; // プログラムは0x200から
+        this.#stack          = new Uint16Array(16);
+        this.#stackPointer   = 0; // 8ビット
+        this.#delayTimer     = 0;
+        this.#soundTimer     = 0;
     }
 
     // ROMを読み込む
     readRom (romBuffer: Buffer<ArrayBufferLike>) {
         // 511バイトまでフォントセットを埋める
-        for (let i = 0; i < this.FONTSET.length; i++) {
-            this.memory[i] = this.FONTSET[i]
+        for (let i = 0; i < this.#FONTSET.length; i++) {
+            this.#memory[i] = this.#FONTSET[i]
         }
         // 512バイトからROMを読み込ませる
         for (let i = 0; i < romBuffer.length; i++) {
-            this.memory[0x200 + i] = romBuffer[i];
+            this.#memory[0x200 + i] = romBuffer[i];
         }
     }
 
@@ -56,9 +56,9 @@ export class CPU {
     update () {
         console.log('tick');
 
-        const opcode = this._readOpCode();
+        const opcode = this.#readOpCode();
 
-        this.programCounter += 2;
+        this.#programCounter += 2;
 
         // c x y d に命令コードを分割
         // ニブルという概念を使う
@@ -89,13 +89,13 @@ export class CPU {
             nnn,
             kk
         };
-        this._executeOrder(splitOpcode);
+        this.#executeOrder(splitOpcode);
     }
 
     // プログラムカウンタから2バイト読む
-    _readOpCode () {
-        const ahead = this.memory[this.programCounter];
-        const back  = this.memory[this.programCounter + 1];
+    #readOpCode () {
+        const ahead = this.#memory[this.#programCounter];
+        const back  = this.#memory[this.#programCounter + 1];
 
         // ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
         // XXYYで例える
@@ -106,7 +106,7 @@ export class CPU {
     }
 
     // 命令
-    _executeOrder (splitOpcode: {
+    #executeOrder (splitOpcode: {
         // @TODO 型
         c: number,
         x: number,
@@ -126,16 +126,188 @@ export class CPU {
 
         switch ([c, x, y, d].join('-')) {
             case '0-0-E-0':
-              this._cls();
-              break;
+                this.#cls();
+                break;
+            case '0-0-E-E':
+                this.#ret();
+                break;
+            case '1-n-n-n':
+                this.#jpAddr(nnn);
+                break;
+            case '2-n-n-n':
+                this.#callAddr(nnn);
+                break;
+            case '3-x-k-k':
+                this.#seVxByte(x, kk);
+                break;
+            case '4-x-k-k':
+                this.#sneVxByte(x, kk);
+                break;
+            case '5-x-y-0':
+                this.#seVxVy(x, y);
+                break;
+            case '6-x-k-k':
+                this.#ldVxByte(x, kk);
+                break;
+            case '7-x-k-k':
+                this.#addVxByte(x, kk);
+                break;
+            case '8-x-y-0':
+                this.#ldVxVy(x, y);
+                break;
+            case '8-x-y-1':
+                this.#orVxVy(x, y);
+                break;
+            case '8-x-y-2':
+                this.#andVxVy(x, y);
+                break;
+            case '8-x-y-3':
+                this.#xorVxVy(x, y);
+                break;
+            case '8-x-y-4':
+                this.#addVxVy(x, y);
+                break;
+            case '8-x-y-5':
+                this.#subVxVy(x, y);
+                break;
+            case '8-x-y-6':
+                this.#shrVx(x);
+                break;
+            case '8-x-y-7':
+                this.#subnVxVy(x, y);
+                break;
+            case '8-x-y-E':
+                this.#shlVx(x);
+                break;
+            case '9-x-y-0':
+                this.#sneVxVy(x, y);
+                break;
+            case 'A-n-n-n':
+                this.#ldIAddr(nnn);
+                break;
+            case 'B-n-n-n':
+                this.#jpV0Addr(nnn);
+                break;
+            case 'C-x-k-k':
+                this.#rndVxByte(x, kk);
+                break;
+            case 'D-x-y-n':
+                this.#drwVxVyNibble(x, y, d);
+                break;
+            case 'E-x-9-E':
+                this.#skpVx(x);
+                break;
             default:
-              console.log(`opcode ${[c, x, y, d].join('-')}`);
-          }
+                console.log(`undefined opcode ${[c, x, y, d].join('-')}`);
+        }
     }
 
-    _cls () {
+    #cls () {
         // ディスプレイクリア
     }
 
+    #ret () {
+        this.#programCounter = this.#stack[this.#stackPointer];
+        this.#stackPointer--;
+    }
+
+    #jpAddr (nnn: number) {
+        this.#programCounter = nnn;
+    }
+
+    #callAddr (nnn: number) {
+        this.#stackPointer++;
+        this.#stack[this.#stackPointer] = this.#programCounter;
+        this.#programCounter = nnn;
+    }
+
+    #seVxByte (x: number, kk: number) {
+        if (this.#registerV[x] === kk) this.#programCounter += 2;
+    }
+
+    #sneVxByte (x: number, kk: number) {
+        if (this.#registerV[x] !== kk) this.#programCounter += 2;
+    }
+
+    #seVxVy (x: number, y: number) {
+        if (this.#registerV[x] === this.#registerV[y]) this.#programCounter += 2;
+    }
+
+    #ldVxByte (x: number, kk: number) {
+        this.#registerV[x] = kk;
+    }
+
+    #addVxByte (x: number, kk: number) {
+        this.#registerV[x] += kk;
+    }
+    
+    #ldVxVy (x: number, y: number) {
+        this.#registerV[x] = this.#registerV[y];
+    }
+
+    #orVxVy (x: number, y: number) {
+        this.#registerV[x] |= this.#registerV[y];
+    }
+
+    #andVxVy (x: number, y: number) {
+        this.#registerV[x] &= this.#registerV[y];
+    }
+
+    #xorVxVy (x: number, y: number) {
+        this.#registerV[x] ^= this.#registerV[y];
+    }
+
+    #addVxVy (x: number, y: number) {
+        this.#registerV[x] += this.#registerV[y];
+        this.#registerV[0xF] = (this.#registerV[x] > 0xFF) ? 1 : 0;
+    }
+
+    #subVxVy (x: number, y: number) {
+        this.#registerV[0xF] = (this.#registerV[x] > this.#registerV[y]) ? 1 : 0;
+        this.#registerV[x] -= this.#registerV[y];
+    }
+
+    #shrVx (x: number) {
+        this.#registerV[0xF] = (this.#registerV[x] & 0x1) ? 1 : 0;
+        this.#registerV[x] >>= 1;
+    }
+
+    #subnVxVy (x: number, y: number) {
+        this.#registerV[0xF] = (this.#registerV[y] > this.#registerV[x]) ? 1 : 0;
+        this.#registerV[x] = this.#registerV[y] - this.#registerV[x];
+    }
+
+    #shlVx (x: number) {
+        this.#registerV[0xF] = (this.#registerV[x] & 0x80) ? 1 : 0;
+        this.#registerV[x] <<= 1;
+    }
+
+    #sneVxVy (x: number, y: number) {
+        this.#programCounter += (this.#registerV[x] !== this.#registerV[y]) ? 2 : 0;
+    }
+
+    #ldIAddr (nnn: number) {
+        this.#indexRegisterI = nnn;
+    }
+
+    #jpV0Addr (nnn: number) {
+        this.#programCounter = nnn + this.#registerV[0];
+    }
+
+    #rndVxByte (x: number, kk: number) {
+        this.#registerV[x] = Math.floor(Math.random() * 0xFF) & kk;
+    }
+
+    #drwVxVyNibble (x: number, y: number, d: number) {
+        // @TODO
+        // アドレスIのnバイトのスプライトを(Vx, Vy)に描画する。Vfにはcollision(後述)をセットする。
+        // アドレスIのnバイトのスプライトを読み出し、スプライトとして(Vx, Vy)に描画する。スプライトは画面にXORする。このとき、消されたピクセルが一つでもある場合はVfに1、それ以外の場合は0をセットする。スプライトの一部が画面からはみ出る場合は、逆方向に折り返す
+    }
+
+    #skpVx (x: number) {
+        // @TODO
+        // キーボードををチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
+        this.#programCounter += 2;
+    }
     // タイマー実装
 }
