@@ -54,8 +54,6 @@ export class CPU {
 
     // 命令コード実行
     update () {
-        console.log('tick');
-
         const opcode = this.#readOpCode();
 
         this.#programCounter += 2;
@@ -197,12 +195,43 @@ export class CPU {
             case 'E-x-9-E':
                 this.#skpVx(x);
                 break;
+            case 'E-x-A-1':
+                this.#sknpVx(x);
+                break;
+            case 'F-x-0-7':
+                this.#ldVxDt(x);
+                break;
+            case 'F-x-0-A':
+                this.#ldVxK(x);
+                break;
+            case 'F-x-1-5':
+                this.#ldDtVx(x);
+                break;
+            case 'F-x-1-8':
+                this.#ldStVx(x);
+                break;
+            case 'F-x-1-E':
+                this.#addIVx(x);
+                break;
+            case 'F-x-2-9':
+                this.#ldFVx(x);
+                break;
+            case 'F-x-3-3':
+                this.#ldBVx(x);
+                break;
+            case 'F-x-5-5':
+                this.#ldIVx(x);
+                break;
+            case 'F-x-6-5':
+                this.#ldVxI(x);
+                break;
             default:
                 console.log(`undefined opcode ${[c, x, y, d].join('-')}`);
         }
     }
 
     #cls () {
+        // @TODO
         // ディスプレイクリア
     }
 
@@ -309,5 +338,66 @@ export class CPU {
         // キーボードををチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
         this.#programCounter += 2;
     }
+
+    #sknpVx (x: number) {
+        // @TODO
+        // キーボードをチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
+        this.#programCounter += 2;
+    }
+
+    #ldVxDt (x: number) {
+        this.#registerV[x] = this.#delayTimer;
+    }
+
+    #ldVxK (x: number) {
+        // @TODO
+        // 押されたキーをVxにセットする。
+        // キーが入力されるまで全ての実行をストップする。キーが押されるとその値をVxにセットする。
+    }
+
+    #ldDtVx (x: number) {
+        this.#delayTimer = this.#registerV[x];
+    }
+
+    #ldStVx (x: number) {
+        this.#soundTimer = this.#registerV[x];
+    }
+
+    #addIVx (x: number) {
+        this.#indexRegisterI += this.#registerV[x];
+    }
+
+    #ldFVx (x: number) {
+        // @TODO
+        // Vxの値に対応するスプライト(fontset)のアドレスをセットする
+    }
+
+    #ldBVx (x: number) {
+        let v = this.#registerV[x];
+        const B = Math.floor(v / 100);
+
+        v = v - B * 100;
+        const C = Math.floor(v / 10);
+
+        v = v - C * 10;
+        const D = Math.floor(v);
+
+        this.#memory[this.#indexRegisterI]     = B;
+        this.#memory[this.#indexRegisterI + 1] = C;
+        this.#memory[this.#indexRegisterI + 2] = D;
+    }
+
+    #ldIVx (x: number) {
+        for (let i = 0; i <= x; i++) {
+            this.#memory[this.#indexRegisterI + i] = this.#registerV[i];
+        }
+    }
+
+    #ldVxI (x: number) {
+        for (let i = 0; i <= x; i++) {
+            this.#registerV[i] = this.#memory[this.#indexRegisterI + i];
+        }
+    }
+
     // タイマー実装
 }
