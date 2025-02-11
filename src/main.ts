@@ -15,6 +15,7 @@ cpu.readRom(romBuffer);
 
 function loop() {
     cpu.update();
+    cpu.decrementTimers();
     setTimeout(loop, 5);
 }
   

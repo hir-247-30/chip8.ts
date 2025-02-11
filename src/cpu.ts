@@ -1,13 +1,19 @@
+import blessed from 'blessed';
+
+const DISPLAY_WIDTH  = 64;
+const DISPLAY_HEIGHT = 32;
+const COLOR          = '#000000';
+
 export class CPU {
     // レジスタ定義
     #memory        : Uint8Array;
     #registerV     : Uint8Array;
     #indexRegisterI: number;
-    #programCounter: number
-    #stack         : Uint16Array
-    #stackPointer  : number
-    #delayTimer    : number
-    #soundTimer    : number
+    #programCounter: number;
+    #stack         : Uint16Array;
+    #stackPointer  : number;
+    #delayTimer    : number;
+    #soundTimer    : number;
     // フォントセット
     #FONTSET: number[] = [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -26,7 +32,10 @@ export class CPU {
         0xE0, 0x90, 0x90, 0x90, 0xE0, // D
         0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
         0xF0, 0x80, 0xF0, 0x80, 0x80, // F
-    ]
+    ];
+
+    #screen: blessed.Widgets.Screen;
+    #displayBuffer: number[][];
 
     constructor() {
         // レジスタ初期化
@@ -38,6 +47,14 @@ export class CPU {
         this.#stackPointer   = 0; // 8ビット
         this.#delayTimer     = 0;
         this.#soundTimer     = 0;
+        // ディスプレイ
+        this.#screen = blessed.screen({
+            title      : 'CHIP-8',
+            autoPadding: true,
+            smartCSR   : true,
+            fg         : COLOR
+        });
+        this.#displayBuffer = this.#initDisplay();
     }
 
     // ROMを読み込む
@@ -88,6 +105,22 @@ export class CPU {
             kk
         };
         this.#executeOrder(splitOpcode);
+    }
+
+    decrementTimers () {
+        if (this.#delayTimer > 0) this.#delayTimer--;
+        if (this.#soundTimer > 0) this.#soundTimer--;
+    }
+
+    #initDisplay () {
+        let displayBuffer: number[][] = [];
+        for (let i = 0; i < DISPLAY_WIDTH; i++) {
+            displayBuffer[i] = [];
+            for (let j = 0; j < DISPLAY_HEIGHT; j++) {
+                displayBuffer[i].push(0);
+            }
+        }
+        return displayBuffer;
     }
 
     // プログラムカウンタから2バイト読む
@@ -231,8 +264,8 @@ export class CPU {
     }
 
     #cls () {
-        // @TODO
-        // ディスプレイクリア
+        this.#displayBuffer = this.#initDisplay();
+        this.#screen.clearRegion(0, DISPLAY_WIDTH, 0, DISPLAY_HEIGHT);
     }
 
     #ret () {
@@ -327,10 +360,31 @@ export class CPU {
         this.#registerV[x] = Math.floor(Math.random() * 0xFF) & kk;
     }
 
-    #drwVxVyNibble (x: number, y: number, d: number) {
-        // @TODO
-        // アドレスIのnバイトのスプライトを(Vx, Vy)に描画する。Vfにはcollision(後述)をセットする。
-        // アドレスIのnバイトのスプライトを読み出し、スプライトとして(Vx, Vy)に描画する。スプライトは画面にXORする。このとき、消されたピクセルが一つでもある場合はVfに1、それ以外の場合は0をセットする。スプライトの一部が画面からはみ出る場合は、逆方向に折り返す
+    // dもnも一緒に扱ってOK
+    #drwVxVyNibble (x: number, y: number, n: number) {
+        this.#registerV[0xf] = 0;
+
+        for (let byteOffset = 0; byteOffset < n; byteOffset++) {
+            let byte = this.#memory[this.#indexRegisterI + byteOffset];
+            for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
+                let bit = (byte >> (7 - bitOffset)) & 0x1;
+                let currX = (this.#registerV[x] + bitOffset) % DISPLAY_WIDTH;
+                let currY = (this.#registerV[y] + byteOffset) % DISPLAY_HEIGHT;
+
+                const collision = this.#displayBuffer[y][x] & bit;
+                this.#displayBuffer[currY][currX] ^= bit;
+
+                if (this.#displayBuffer[currY][currX]) {
+                    this.#screen.fillRegion(COLOR, '#', currX, currX + 1, currY, currY + 1);
+                } else {
+                    this.#screen.clearRegion(currX, currX + 1, currY, currY + 1);
+                }
+                this.#screen.render();
+
+                // 消されたピクセルが一つでもある場合はVfに1、それ以外の場合は0をセットする
+                if (collision) this.#registerV[0xf] = 1;
+            }
+        }
     }
 
     #skpVx (x: number) {
@@ -398,6 +452,4 @@ export class CPU {
             this.#registerV[i] = this.#memory[this.#indexRegisterI + i];
         }
     }
-
-    // タイマー実装
 }

@@ -10,10 +10,12 @@
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.8",
+    "@types/blessed": "^0.1.25",
     "@types/node": "^22.13.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "blessed": "^0.1.81",
     "ts-node": "^10.9.2"
   }
 }
