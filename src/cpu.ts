@@ -37,6 +37,8 @@ export class CPU {
     #screen: blessed.Widgets.Screen;
     #displayBuffer: number[][];
 
+    #debug: boolean = false;
+
     constructor() {
         // レジスタ初期化
         this.#memory         = new Uint8Array(4096);
@@ -155,11 +157,12 @@ export class CPU {
             kk
         } = splitOpcode;
 
-        switch ([c, x, y, d].join('-')) {
-            case '0-0-E-0':
+        const hexOrder = [c.toString(16), x.toString(16), y.toString(16), d.toString(16)].join('-');
+        switch (hexOrder) {
+            case '0-0-e-0':
                 this.#cls();
                 break;
-            case '0-0-E-E':
+            case '0-0-e-e':
                 this.#ret();
                 break;
             case '1-n-n-n':
@@ -213,54 +216,56 @@ export class CPU {
             case '9-x-y-0':
                 this.#sneVxVy(x, y);
                 break;
-            case 'A-n-n-n':
+            case 'a-n-n-n':
                 this.#ldIAddr(nnn);
                 break;
-            case 'B-n-n-n':
+            case 'b-n-n-n':
                 this.#jpV0Addr(nnn);
                 break;
-            case 'C-x-k-k':
+            case 'c-x-k-k':
                 this.#rndVxByte(x, kk);
                 break;
-            case 'D-x-y-n':
+            case 'd-x-y-n':
                 this.#drwVxVyNibble(x, y, d);
                 break;
-            case 'E-x-9-E':
+            case 'e-x-9-e':
                 this.#skpVx(x);
                 break;
-            case 'E-x-A-1':
+            case 'e-x-a-1':
                 this.#sknpVx(x);
                 break;
-            case 'F-x-0-7':
+            case 'f-x-0-7':
                 this.#ldVxDt(x);
                 break;
-            case 'F-x-0-A':
+            case 'f-x-0-a':
                 this.#ldVxK(x);
                 break;
-            case 'F-x-1-5':
+            case 'f-x-1-5':
                 this.#ldDtVx(x);
                 break;
-            case 'F-x-1-8':
+            case 'f-x-1-8':
                 this.#ldStVx(x);
                 break;
-            case 'F-x-1-E':
+            case 'f-x-1-e':
                 this.#addIVx(x);
                 break;
-            case 'F-x-2-9':
+            case 'f-x-2-9':
                 this.#ldFVx(x);
                 break;
-            case 'F-x-3-3':
+            case 'f-x-3-3':
                 this.#ldBVx(x);
                 break;
-            case 'F-x-5-5':
+            case 'f-x-5-5':
                 this.#ldIVx(x);
                 break;
-            case 'F-x-6-5':
+            case 'f-x-6-5':
                 this.#ldVxI(x);
                 break;
             default:
-                console.log(`undefined opcode ${[c, x, y, d].join('-')}`);
+                console.log(`undefined opcode ${hexOrder}`);
+                return;
         }
+        this.#debugDump(hexOrder);
     }
 
     #cls () {
@@ -451,5 +456,21 @@ export class CPU {
         for (let i = 0; i <= x; i++) {
             this.#registerV[i] = this.#memory[this.#indexRegisterI + i];
         }
+    }
+
+    #debugDump (joinedOrder: string) {
+        if (!this.#debug) return;
+
+        const dumpArray = {
+            'Order': joinedOrder,
+            'V'    : this.#registerV,
+            'I'    : this.#indexRegisterI,
+            'PG'   : this.#programCounter,
+            'Stack': this.#stack,
+            'SP'   : this.#stackPointer,
+            'DT'   : this.#delayTimer,
+            'ST'   : this.#soundTimer,
+        }
+        console.log(dumpArray);
     }
 }
