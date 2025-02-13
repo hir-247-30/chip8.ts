@@ -71,6 +71,11 @@ export class CPU {
         }
     }
 
+    decrementTimers () {
+        if (this.#delayTimer > 0) this.#delayTimer--;
+        if (this.#soundTimer > 0) this.#soundTimer--;
+    }
+
     // 命令コード実行
     update () {
         const opcode = this.#readOpCode();
@@ -97,21 +102,143 @@ export class CPU {
         const nnn = (opcode & 0x0FFF);
         const kk  = (opcode & 0x00FF);
 
-        // 命令実行
-        const splitOpcode = {
-            c,
-            x,
-            y,
-            d,
-            nnn,
-            kk
-        };
-        this.#executeOrder(splitOpcode);
-    }
-
-    decrementTimers () {
-        if (this.#delayTimer > 0) this.#delayTimer--;
-        if (this.#soundTimer > 0) this.#soundTimer--;
+        const hexOrder = [c.toString(16), x.toString(16), y.toString(16), d.toString(16)].join('-');
+        switch (opcode & 0xF000) {
+            case 0x0000: {
+                switch (opcode & 0x00FF) {
+                    case 0x00E0:
+                        this.#cls();
+                        break;
+                    case 0x00EE:
+                        this.#ret();
+                        break;
+                    default:
+                        console.log(`undefined opcode ${hexOrder}`);
+                        return;
+                };
+            };
+            case 0x1000:
+                this.#jpAddr(nnn);
+                break;
+            case 0x2000:
+                this.#callAddr(nnn);
+                break;
+            case 0x3000:
+                this.#seVxByte(x, kk);
+                break;
+            case 0x4000:
+                this.#sneVxByte(x, kk);
+                break;
+            case 0x5000:
+                this.#seVxVy(x, y);
+                break;
+            case 0x6000:
+                this.#ldVxByte(x, kk);
+                break;
+            case 0x7000:
+                this.#addVxByte(x, kk);
+                break;
+            case 0x8000: {
+                switch (opcode & 0x000F) {
+                    case 0x0000:
+                        this.#ldVxVy(x, y);
+                        break;
+                    case 0x0001:
+                        this.#orVxVy(x, y);
+                        break;
+                    case 0x0002:
+                        this.#andVxVy(x, y);
+                        break;
+                    case 0x0003:
+                        this.#xorVxVy(x, y);
+                        break;
+                    case 0x0004:
+                        this.#addVxVy(x, y);
+                        break;
+                    case 0x0005:
+                        this.#subVxVy(x, y);
+                        break;
+                    case 0x0006:
+                        this.#shrVx(x);
+                        break;
+                    case 0x0007:
+                        this.#subnVxVy(x, y);
+                        break;
+                    case 0x000E:
+                        this.#shlVx(x);
+                        break;
+                    default:
+                        console.log(`undefined opcode ${hexOrder}`);
+                        return;
+                };
+            };
+            case 0x9000:
+                this.#sneVxVy(x, y);
+                break;
+            case 0xA000:
+                this.#ldIAddr(nnn);
+                break;
+            case 0xB000:
+                this.#jpV0Addr(nnn);
+                break;
+            case 0xC000:
+                this.#rndVxByte(x, kk);
+                break;
+            case 0xD000:
+                this.#drwVxVyNibble(x, y, d);
+                break;
+            case 0xE000: {
+                switch (opcode & 0x00FF) {
+                    case 0x009E:
+                        this.#skpVx(x);
+                        break;
+                    case 0x00A1:
+                        this.#sknpVx(x);
+                        break;
+                    default:
+                        console.log(`undefined opcode ${hexOrder}`);
+                        return;
+                };
+            };
+            case 0xF000: {
+                switch (opcode & 0x00FF) {
+                    case 0x0007:
+                        this.#ldVxDt(x);
+                        break;
+                    case 0x000A:
+                        this.#ldVxK(x);
+                        break;
+                    case 0x0015:
+                        this.#ldDtVx(x);
+                        break;
+                    case 0x0018:
+                        this.#ldStVx(x);
+                        break;
+                    case 0x001E:
+                        this.#addIVx(x);
+                        break;
+                    case 0x0029:
+                        this.#ldFVx(x);
+                        break;
+                    case 0x0033:
+                        this.#ldBVx(x);
+                        break;
+                    case 0x0055:
+                        this.#ldIVx(x);
+                        break;
+                    case 0x0065:
+                        this.#ldVxI(x);
+                        break;
+                    default:
+                        console.log(`undefined opcode ${hexOrder}`);
+                        return;
+                };
+            };
+            default:
+                console.log(`undefined opcode ${hexOrder}`);
+                return;
+        }
+        this.#debugDump(hexOrder);
     }
 
     #initDisplay () {
@@ -136,136 +263,6 @@ export class CPU {
         // 2つ目のバイトはushortしたら00YY
         // 1つ目を1バイト（8ビット）左シフトさせて論理和を取ればXXYYにできる
         return ahead << 8 | back;
-    }
-
-    // 命令
-    #executeOrder (splitOpcode: {
-        // @TODO 型
-        c: number,
-        x: number,
-        y: number,
-        d: number,
-        nnn: number,
-        kk: number
-    }) {
-        const {
-            c,
-            x,
-            y,
-            d,
-            nnn,
-            kk
-        } = splitOpcode;
-
-        const hexOrder = [c.toString(16), x.toString(16), y.toString(16), d.toString(16)].join('-');
-        switch (hexOrder) {
-            case '0-0-e-0':
-                this.#cls();
-                break;
-            case '0-0-e-e':
-                this.#ret();
-                break;
-            case '1-n-n-n':
-                this.#jpAddr(nnn);
-                break;
-            case '2-n-n-n':
-                this.#callAddr(nnn);
-                break;
-            case '3-x-k-k':
-                this.#seVxByte(x, kk);
-                break;
-            case '4-x-k-k':
-                this.#sneVxByte(x, kk);
-                break;
-            case '5-x-y-0':
-                this.#seVxVy(x, y);
-                break;
-            case '6-x-k-k':
-                this.#ldVxByte(x, kk);
-                break;
-            case '7-x-k-k':
-                this.#addVxByte(x, kk);
-                break;
-            case '8-x-y-0':
-                this.#ldVxVy(x, y);
-                break;
-            case '8-x-y-1':
-                this.#orVxVy(x, y);
-                break;
-            case '8-x-y-2':
-                this.#andVxVy(x, y);
-                break;
-            case '8-x-y-3':
-                this.#xorVxVy(x, y);
-                break;
-            case '8-x-y-4':
-                this.#addVxVy(x, y);
-                break;
-            case '8-x-y-5':
-                this.#subVxVy(x, y);
-                break;
-            case '8-x-y-6':
-                this.#shrVx(x);
-                break;
-            case '8-x-y-7':
-                this.#subnVxVy(x, y);
-                break;
-            case '8-x-y-E':
-                this.#shlVx(x);
-                break;
-            case '9-x-y-0':
-                this.#sneVxVy(x, y);
-                break;
-            case 'a-n-n-n':
-                this.#ldIAddr(nnn);
-                break;
-            case 'b-n-n-n':
-                this.#jpV0Addr(nnn);
-                break;
-            case 'c-x-k-k':
-                this.#rndVxByte(x, kk);
-                break;
-            case 'd-x-y-n':
-                this.#drwVxVyNibble(x, y, d);
-                break;
-            case 'e-x-9-e':
-                this.#skpVx(x);
-                break;
-            case 'e-x-a-1':
-                this.#sknpVx(x);
-                break;
-            case 'f-x-0-7':
-                this.#ldVxDt(x);
-                break;
-            case 'f-x-0-a':
-                this.#ldVxK(x);
-                break;
-            case 'f-x-1-5':
-                this.#ldDtVx(x);
-                break;
-            case 'f-x-1-8':
-                this.#ldStVx(x);
-                break;
-            case 'f-x-1-e':
-                this.#addIVx(x);
-                break;
-            case 'f-x-2-9':
-                this.#ldFVx(x);
-                break;
-            case 'f-x-3-3':
-                this.#ldBVx(x);
-                break;
-            case 'f-x-5-5':
-                this.#ldIVx(x);
-                break;
-            case 'f-x-6-5':
-                this.#ldVxI(x);
-                break;
-            default:
-                console.log(`undefined opcode ${hexOrder}`);
-                return;
-        }
-        this.#debugDump(hexOrder);
     }
 
     #cls () {
@@ -395,13 +392,11 @@ export class CPU {
     #skpVx (x: number) {
         // @TODO
         // キーボードををチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
-        this.#programCounter += 2;
     }
 
     #sknpVx (x: number) {
         // @TODO
         // キーボードをチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
-        this.#programCounter += 2;
     }
 
     #ldVxDt (x: number) {
