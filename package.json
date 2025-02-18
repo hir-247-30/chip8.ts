@@ -2,20 +2,26 @@
   "name": "chip8",
   "version": "1.0.0",
   "description": "chip8 written in TypeScript",
-  "main": "index.js",
+  "main": "src/main.ts",
   "scripts": {
-    "start": "./node_modules/.bin/ts-node src/main.ts"
+    "start": "./node_modules/.bin/ts-node src/main.ts",
+    "test": "npx tsc --noEmit && mocha -r tsx 'src/test/**/*.ts' --exit"
   },
   "author": "hir-247-30",
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.8",
     "@types/blessed": "^0.1.25",
+    "@types/chai": "^5.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "ts-node": "^10.9.2"
+    "chai": "^5.2.0",
+    "mocha": "^11.1.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2"
   }
 }
