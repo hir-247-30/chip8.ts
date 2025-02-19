@@ -385,17 +385,18 @@ export class CPU {
         for (let byteOffset = 0; byteOffset < n; byteOffset++) {
             let byte = this.memory[this.indexRegisterI + byteOffset];
             for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
-                let bit = (byte >> (7 - bitOffset)) & 0x1;
-                let currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
-                let currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
+                if ((byte & (0x80 >> bitOffset)) === 0) continue;
 
-                const collision = this.displayBuffer[y][x] & bit;
-                this.displayBuffer[currY][currX] ^= bit;
+                const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
+                const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
+
+                const collision = this.displayBuffer[currY][currX] === 1;
+                this.displayBuffer[currY][currX] ^= 1;
+
+                // 既存のビットが立っていたら衝突
+                if (collision) this.registerV[0xf] = 1;
 
                 this.renderDisplay();
-
-                // 消されたピクセルが一つでもある場合はVfに1、それ以外の場合は0をセットする
-                if (collision) this.registerV[0xf] = 1;
             }
         }
     }
@@ -469,14 +470,15 @@ export class CPU {
         if (!this.#logger) return;
 
         const dumpArray = {
-            'Order': hexOrder,
-            'V'    : this.registerV,
-            'I'    : this.indexRegisterI,
-            'PG'   : this.programCounter,
-            'Stack': this.stack,
-            'SP'   : this.stackPointer,
-            'DT'   : this.delayTimer,
-            'ST'   : this.soundTimer,
+            'Order'  : hexOrder,
+            'V'      : this.registerV,
+            'I'      : this.indexRegisterI,
+            'PG'     : this.programCounter,
+            'Stack'  : this.stack,
+            'SP'     : this.stackPointer,
+            'DT'     : this.delayTimer,
+            'ST'     : this.soundTimer,
+            'Display': this.displayBuffer,
         }
         this.#logger.trace(dumpArray)
     }
