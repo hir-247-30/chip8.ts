@@ -1,8 +1,7 @@
-import blessed from 'blessed';
+import pino from 'pino';
 
 const DISPLAY_WIDTH  = 64;
 const DISPLAY_HEIGHT = 32;
-const COLOR          = '#000000';
 
 export class CPU {
     // レジスタ定義
@@ -34,10 +33,10 @@ export class CPU {
         0xF0, 0x80, 0xF0, 0x80, 0x80, // F
     ];
 
-    screen: blessed.Widgets.Screen;
     displayBuffer: number[][];
 
     #debug: boolean = false;
+    #logger;
 
     constructor() {
         // レジスタ初期化
@@ -50,13 +49,21 @@ export class CPU {
         this.delayTimer     = 0;
         this.soundTimer     = 0;
         // ディスプレイ
-        this.screen = blessed.screen({
-            title      : 'CHIP-8',
-            autoPadding: true,
-            smartCSR   : true,
-            fg         : COLOR
-        });
         this.displayBuffer = this._initDisplay();
+        console.log(this.displayBuffer);
+
+        if(this.#debug) {
+            this.#logger = pino({
+                level: 'trace',
+                transport: {
+                    target: 'pino/file',
+                    options: {
+                        destination: 'logs/debug.log',
+                        mkdir: true
+                    }
+                }
+            })
+        }
     }
 
     // ROMを読み込む
@@ -71,6 +78,17 @@ export class CPU {
         }
     }
 
+    renderDisplay () {
+        console.clear();
+        for (let y = 0; y < DISPLAY_HEIGHT; y++) {
+            let render = '';
+            for (let x = 0; x < DISPLAY_WIDTH; x++) {
+                render += this.displayBuffer[y][x] ? '█' : ' ';
+            }
+        console.log(render);
+        }
+    }
+
     decrementTimers () {
         if (this.delayTimer > 0) this.delayTimer--;
         if (this.soundTimer > 0) this.soundTimer--;
@@ -79,7 +97,6 @@ export class CPU {
     // 命令コード実行
     update () {
         const opcode = this._readOpCode();
-
         this.programCounter += 2;
 
         // c x y d に命令コードを分割
@@ -113,9 +130,9 @@ export class CPU {
                         this._ret();
                         break;
                     default:
-                        console.log(`undefined opcode ${hexOrder}`);
-                        return;
+                        throw new Error(`undefined opcode ${hexOrder}`);
                 };
+                break;
             };
             case 0x1000:
                 this._jpAddr(nnn);
@@ -168,9 +185,9 @@ export class CPU {
                         this._shlVx(x);
                         break;
                     default:
-                        console.log(`undefined opcode ${hexOrder}`);
-                        return;
+                        throw new Error(`undefined opcode ${hexOrder}`);
                 };
+                break;
             };
             case 0x9000:
                 this._sneVxVy(x, y);
@@ -196,9 +213,9 @@ export class CPU {
                         this._sknpVx(x);
                         break;
                     default:
-                        console.log(`undefined opcode ${hexOrder}`);
-                        return;
+                        throw new Error(`undefined opcode ${hexOrder}`);
                 };
+                break;
             };
             case 0xF000: {
                 switch (opcode & 0x00FF) {
@@ -230,13 +247,12 @@ export class CPU {
                         this._ldVxI(x);
                         break;
                     default:
-                        console.log(`undefined opcode ${hexOrder}`);
-                        return;
+                        throw new Error(`undefined opcode ${hexOrder}`);
                 };
+                break;
             };
             default:
-                console.log(`undefined opcode ${hexOrder}`);
-                return;
+                throw new Error(`undefined opcode ${hexOrder}`);
         }
         this.#debugDump(hexOrder);
     }
@@ -267,7 +283,7 @@ export class CPU {
 
     _cls () {
         this.displayBuffer = this._initDisplay();
-        this.screen.clearRegion(0, DISPLAY_WIDTH, 0, DISPLAY_HEIGHT);
+        console.log(this.displayBuffer)
     }
 
     _ret () {
@@ -376,12 +392,7 @@ export class CPU {
                 const collision = this.displayBuffer[y][x] & bit;
                 this.displayBuffer[currY][currX] ^= bit;
 
-                if (this.displayBuffer[currY][currX]) {
-                    this.screen.fillRegion(COLOR, '#', currX, currX + 1, currY, currY + 1);
-                } else {
-                    this.screen.clearRegion(currX, currX + 1, currY, currY + 1);
-                }
-                this.screen.render();
+                this.renderDisplay();
 
                 // 消されたピクセルが一つでもある場合はVfに1、それ以外の場合は0をセットする
                 if (collision) this.registerV[0xf] = 1;
@@ -407,6 +418,7 @@ export class CPU {
         // @TODO
         // 押されたキーをVxにセットする。
         // キーが入力されるまで全ての実行をストップする。キーが押されるとその値をVxにセットする。
+        this.programCounter -= 2;
     }
 
     _ldDtVx (x: number) {
@@ -422,8 +434,7 @@ export class CPU {
     }
 
     _ldFVx (x: number) {
-        // @TODO
-        // Vxの値に対応するスプライト(fontset)のアドレスをセットする
+        this.indexRegisterI = this.registerV[x] * 0x5;
     }
 
     _ldBVx (x: number) {
@@ -453,11 +464,12 @@ export class CPU {
         }
     }
 
-    #debugDump (joinedOrder: string) {
+    #debugDump (hexOrder: string) {
         if (!this.#debug) return;
+        if (!this.#logger) return;
 
         const dumpArray = {
-            'Order': joinedOrder,
+            'Order': hexOrder,
             'V'    : this.registerV,
             'I'    : this.indexRegisterI,
             'PG'   : this.programCounter,
@@ -466,6 +478,6 @@ export class CPU {
             'DT'   : this.delayTimer,
             'ST'   : this.soundTimer,
         }
-        console.log(dumpArray);
+        this.#logger.trace(dumpArray)
     }
 }
