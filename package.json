@@ -5,7 +5,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "./node_modules/.bin/ts-node src/main.ts",
-    "test": "npx tsc --noEmit && mocha -r tsx 'src/test/**/*.ts' --exit"
+    "test": "npx tsc --noEmit && mocha -r tsx 'src/test/**/*.ts'"
   },
   "author": "hir-247-30",
   "license": "ISC",
