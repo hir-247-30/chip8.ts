@@ -1,10 +1,13 @@
 import * as fs from 'fs'
 import { CPU } from '../cpu'
+import { Display } from '../display'
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from '../define';
 
 describe('order', () => {
     const cpu = new CPU();
+    const display = new Display();
 
     before(function() {
         let romBuffer: Buffer<ArrayBufferLike>
@@ -21,11 +24,9 @@ describe('order', () => {
     });
 
     it('00E0 - CLS', () => {
-        // TODO
-        // 64 と 32 は別ファイルでconstとして定義する
-        cpu.displayBuffer = new Array(64 * 32).fill(1);
-        cpu._cls();
-        cpu.displayBuffer.forEach(pixel => {
+        display.displayBuffer = new Array(DISPLAY_WIDTH * DISPLAY_HEIGHT).fill(1);
+        display.clearDisplay();
+        display.displayBuffer.forEach(pixel => {
             assert.deepEqual(pixel[0], 0);
         });
     });

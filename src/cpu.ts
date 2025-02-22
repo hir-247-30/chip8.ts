@@ -1,8 +1,6 @@
-import blessed from 'blessed';
 import pino from 'pino';
-
-const DISPLAY_WIDTH  = 64;
-const DISPLAY_HEIGHT = 32;
+import { Display } from './display';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './define';
 
 export class CPU {
     // レジスタ定義
@@ -14,7 +12,6 @@ export class CPU {
     stackPointer  : number;
     delayTimer    : number;
     soundTimer    : number;
-    keyInput      : number|null;
     // フォントセット
     #FONTSET: number[] = [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -34,10 +31,8 @@ export class CPU {
         0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
         0xF0, 0x80, 0xF0, 0x80, 0x80, // F
     ];
-
-    displayBuffer: number[][];
-    screen: blessed.Widgets.Screen;
-    screenBox: blessed.Widgets.BoxElement;
+    // ディスプレイ
+    display: Display;
 
     #debug: boolean = false;
     #logger;
@@ -52,9 +47,8 @@ export class CPU {
         this.stackPointer   = 0; // 8ビット
         this.delayTimer     = 0;
         this.soundTimer     = 0;
-        this.keyInput       = null;
-        // ディスプレイ
-        this.displayBuffer = this._initDisplay();
+
+        this.display = new Display()
 
         if(this.#debug) {
             this.#logger = pino({
@@ -68,48 +62,6 @@ export class CPU {
                 }
             })
         }
-
-        this.screen = blessed.screen({
-            smartCSR: true
-        });
-        this.screen.title = 'CHIP-8 Emulator';
-        this.screenBox = blessed.box({
-            top: 'center',
-            left: 'center',
-            wrap: false,
-            // なぜ？？
-            width: DISPLAY_WIDTH + 2,
-            height: DISPLAY_HEIGHT + 2,
-            border: {
-              type: 'line',
-            },
-            style: {
-              fg: 'white',
-              bg: 'black',
-            }
-        });
-
-        this.screen.append(this.screenBox);
-        this.screen.render();
-
-        const keyboardMapper = new Map([
-            ['1', 0x1], ['2', 0x2], ['3', 0x3], ['4', 0xC],
-            ['q', 0x4], ['w', 0x5], ['e', 0x6], ['r', 0xD],
-            ['a', 0x7], ['s', 0x8], ['d', 0x9], ['f', 0xE],
-            ['z', 0xA], ['x', 0x0], ['c', 0xB], ['v', 0xF],
-        ]);
-
-        this.screen.on('keypress', (_, key) => {
-            if (key.ctrl && key.name === 'c') process.exit();
-            if (keyboardMapper.has(key.name)) {
-                this.keyInput = keyboardMapper.get(key.name) ?? null;
-            }
-        })
-
-        // 無理やりkeyup表現
-        setInterval(() => {
-            if (this.keyInput !== null) this.keyInput = null;
-        }, 300)
     }
 
     // ROMを読み込む
@@ -124,16 +76,6 @@ export class CPU {
         }
     }
 
-    renderDisplay () {
-        // バッファの内容をディスプレイで表現
-        const render = this.displayBuffer.map(row =>
-            row.map(pxl => (pxl ? '█' : ' ')).join('')
-        ).join('\n');
-        
-        this.screenBox.setContent(render);
-        this.screen.render();
-    }
-
     decrementTimers () {
         if (this.delayTimer > 0) this.delayTimer--;
         if (this.soundTimer > 0) this.soundTimer--;
@@ -141,6 +83,8 @@ export class CPU {
 
     // 命令コード実行
     update () {
+        this.display.renderDisplay();
+
         const opcode = this._readOpCode();
         this.programCounter += 2;
 
@@ -302,17 +246,6 @@ export class CPU {
         this.#debugDump(hexOrder);
     }
 
-    _initDisplay () {
-        let displayBuffer: number[][] = [];
-        for (let i = 0; i < DISPLAY_HEIGHT; i++) {
-            displayBuffer[i] = [];
-            for (let j = 0; j < DISPLAY_WIDTH; j++) {
-                displayBuffer[i].push(0);
-            }
-        }
-        return displayBuffer;
-    }
-
     // プログラムカウンタから2バイト読む
     _readOpCode () {
         const ahead = this.memory[this.programCounter];
@@ -327,8 +260,7 @@ export class CPU {
     }
 
     _cls () {
-        this.displayBuffer = this._initDisplay();
-        this.renderDisplay();
+        this.display.clearDisplay();
     }
 
     _ret () {
@@ -435,23 +367,23 @@ export class CPU {
                 const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
                 const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
 
-                const collision = this.displayBuffer[currY][currX] === 1;
-                this.displayBuffer[currY][currX] ^= 1;
+                const collision = this.display.displayBuffer[currY][currX] === 1;
+                this.display.displayBuffer[currY][currX] ^= 1;
 
                 // 既存のビットが立っていたら衝突
                 if (collision) this.registerV[0xf] = 1;
 
-                this.renderDisplay();
+                this.display.renderDisplay();
             }
         }
     }
 
     _skpVx (x: number) {
-        if (this.keyInput === this.registerV[x]) this.programCounter += 2;
+        if (this.display.keyInput === this.registerV[x]) this.programCounter += 2;
     }
 
     _sknpVx (x: number) {
-        if (this.keyInput !== this.registerV[x]) this.programCounter += 2;
+        if (this.display.keyInput !== this.registerV[x]) this.programCounter += 2;
     }
 
     _ldVxDt (x: number) {
@@ -460,8 +392,8 @@ export class CPU {
 
     _ldVxK (x: number) {
         // キーが押下されている
-        if (this.keyInput !== null) {
-            this.registerV[x] = this.keyInput;
+        if (this.display.keyInput !== null) {
+            this.registerV[x] = this.display.keyInput;
         }
         // されていない（プログラムカウンタを進めずに待つ）
         else {
@@ -525,7 +457,7 @@ export class CPU {
             'SP'     : this.stackPointer,
             'DT'     : this.delayTimer,
             'ST'     : this.soundTimer,
-            'Display': this.displayBuffer,
+            'Display': this.display.displayBuffer,
         }
         this.#logger.trace(dump)
     }
