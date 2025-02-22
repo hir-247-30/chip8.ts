@@ -13,6 +13,7 @@ export class CPU {
     stackPointer  : number;
     delayTimer    : number;
     soundTimer    : number;
+    keyInput      : number|null;
     // フォントセット
     #FONTSET: number[] = [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -48,6 +49,7 @@ export class CPU {
         this.stackPointer   = 0; // 8ビット
         this.delayTimer     = 0;
         this.soundTimer     = 0;
+        this.keyInput       = null;
         // ディスプレイ
         this.displayBuffer = this._initDisplay();
         console.log(this.displayBuffer);
@@ -402,13 +404,11 @@ export class CPU {
     }
 
     _skpVx (x: number) {
-        // @TODO
-        // キーボードををチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
+        if (this.keyInput === this.registerV[x]) this.programCounter += 2;
     }
 
     _sknpVx (x: number) {
-        // @TODO
-        // キーボードをチェックし、Vxの値のキーが押されていればプログラムカウンタを2インクリメントする。
+        if (this.keyInput !== this.registerV[x]) this.programCounter += 2;
     }
 
     _ldVxDt (x: number) {
@@ -416,10 +416,14 @@ export class CPU {
     }
 
     _ldVxK (x: number) {
-        // @TODO
-        // 押されたキーをVxにセットする。
-        // キーが入力されるまで全ての実行をストップする。キーが押されるとその値をVxにセットする。
-        this.programCounter -= 2;
+        // キーが押下されている
+        if (this.keyInput !== null) {
+            this.registerV[x] = this.keyInput;
+        }
+        // されていない（プログラムカウンタを進めずに待つ）
+        else {
+            this.programCounter -= 2;
+        }
     }
 
     _ldDtVx (x: number) {
