@@ -1,3 +1,4 @@
+import blessed from 'blessed';
 import pino from 'pino';
 
 const DISPLAY_WIDTH  = 64;
@@ -35,6 +36,8 @@ export class CPU {
     ];
 
     displayBuffer: number[][];
+    screen: blessed.Widgets.Screen;
+    screenBox: blessed.Widgets.BoxElement;
 
     #debug: boolean = false;
     #logger;
@@ -52,7 +55,6 @@ export class CPU {
         this.keyInput       = null;
         // ディスプレイ
         this.displayBuffer = this._initDisplay();
-        console.log(this.displayBuffer);
 
         if(this.#debug) {
             this.#logger = pino({
@@ -66,6 +68,48 @@ export class CPU {
                 }
             })
         }
+
+        this.screen = blessed.screen({
+            smartCSR: true
+        });
+        this.screen.title = 'CHIP-8 Emulator';
+        this.screenBox = blessed.box({
+            top: 'center',
+            left: 'center',
+            wrap: false,
+            // なぜ？？
+            width: DISPLAY_WIDTH + 2,
+            height: DISPLAY_HEIGHT + 2,
+            border: {
+              type: 'line',
+            },
+            style: {
+              fg: 'white',
+              bg: 'black',
+            }
+        });
+
+        this.screen.append(this.screenBox);
+        this.screen.render();
+
+        const keyboardMapper = new Map([
+            ['1', 0x1], ['2', 0x2], ['3', 0x3], ['4', 0xC],
+            ['q', 0x4], ['w', 0x5], ['e', 0x6], ['r', 0xD],
+            ['a', 0x7], ['s', 0x8], ['d', 0x9], ['f', 0xE],
+            ['z', 0xA], ['x', 0x0], ['c', 0xB], ['v', 0xF],
+        ]);
+
+        this.screen.on('keypress', (_, key) => {
+            if (key.ctrl && key.name === 'c') process.exit();
+            if (keyboardMapper.has(key.name)) {
+                this.keyInput = keyboardMapper.get(key.name) ?? null;
+            }
+        })
+
+        // 無理やりkeyup表現
+        setInterval(() => {
+            if (this.keyInput !== null) this.keyInput = null;
+        }, 300)
     }
 
     // ROMを読み込む
@@ -81,14 +125,13 @@ export class CPU {
     }
 
     renderDisplay () {
-        console.clear();
-        for (let y = 0; y < DISPLAY_HEIGHT; y++) {
-            let render = '';
-            for (let x = 0; x < DISPLAY_WIDTH; x++) {
-                render += this.displayBuffer[y][x] ? '█' : ' ';
-            }
-        console.log(render);
-        }
+        // バッファの内容をディスプレイで表現
+        const render = this.displayBuffer.map(row =>
+            row.map(pxl => (pxl ? '█' : ' ')).join('')
+        ).join('\n');
+        
+        this.screenBox.setContent(render);
+        this.screen.render();
     }
 
     decrementTimers () {
@@ -261,9 +304,9 @@ export class CPU {
 
     _initDisplay () {
         let displayBuffer: number[][] = [];
-        for (let i = 0; i < DISPLAY_WIDTH; i++) {
+        for (let i = 0; i < DISPLAY_HEIGHT; i++) {
             displayBuffer[i] = [];
-            for (let j = 0; j < DISPLAY_HEIGHT; j++) {
+            for (let j = 0; j < DISPLAY_WIDTH; j++) {
                 displayBuffer[i].push(0);
             }
         }
@@ -285,7 +328,7 @@ export class CPU {
 
     _cls () {
         this.displayBuffer = this._initDisplay();
-        console.log(this.displayBuffer)
+        this.renderDisplay();
     }
 
     _ret () {
@@ -473,7 +516,7 @@ export class CPU {
         if (!this.#debug) return;
         if (!this.#logger) return;
 
-        const dumpArray = {
+        const dump = {
             'Order'  : hexOrder,
             'V'      : this.registerV,
             'I'      : this.indexRegisterI,
@@ -484,6 +527,6 @@ export class CPU {
             'ST'     : this.soundTimer,
             'Display': this.displayBuffer,
         }
-        this.#logger.trace(dumpArray)
+        this.#logger.trace(dump)
     }
 }
