@@ -37,7 +37,7 @@ export class CPU {
     #debug: boolean = false;
     #logger;
 
-    constructor() {
+    constructor () {
         // レジスタ初期化
         this.memory         = new Uint8Array(4096);
         this.registerV      = new Uint8Array(16);
@@ -48,7 +48,7 @@ export class CPU {
         this.delayTimer     = 0;
         this.soundTimer     = 0;
 
-        this.display = new Display()
+        this.display = new Display();
 
         if(this.#debug) {
             this.#logger = pino({
@@ -60,7 +60,7 @@ export class CPU {
                         mkdir: true
                     }
                 }
-            })
+            });
         }
     }
 
@@ -68,7 +68,7 @@ export class CPU {
     readRom (romBuffer: Buffer<ArrayBufferLike>) {
         // 511バイトまでフォントセットを埋める
         for (let i = 0; i < this.#FONTSET.length; i++) {
-            this.memory[i] = this.#FONTSET[i]
+            this.memory[i] = this.#FONTSET[i];
         }
         // 512バイトからROMを読み込ませる
         for (let i = 0; i < romBuffer.length; i++) {
@@ -360,7 +360,7 @@ export class CPU {
         this.registerV[0xf] = 0;
 
         for (let byteOffset = 0; byteOffset < n; byteOffset++) {
-            let byte = this.memory[this.indexRegisterI + byteOffset];
+            const byte = this.memory[this.indexRegisterI + byteOffset];
             for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
                 if ((byte & (0x80 >> bitOffset)) === 0) continue;
 
@@ -458,7 +458,7 @@ export class CPU {
             'DT'     : this.delayTimer,
             'ST'     : this.soundTimer,
             'Display': this.display.displayBuffer,
-        }
-        this.#logger.trace(dump)
+        };
+        this.#logger.trace(dump);
     }
 }

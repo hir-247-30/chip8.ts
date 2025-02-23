@@ -1,6 +1,6 @@
-import * as fs from 'fs'
-import { CPU } from '../cpu'
-import { Display } from '../display'
+import * as fs from 'fs';
+import { CPU } from '../cpu';
+import { Display } from '../display';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from '../define';
@@ -9,8 +9,8 @@ describe('order', () => {
     const cpu = new CPU();
     const display = new Display();
 
-    before(function() {
-        let romBuffer: Buffer<ArrayBufferLike>
+    before(function () {
+        let romBuffer: Buffer<ArrayBufferLike>;
         try {
             romBuffer = fs.readFileSync('rom/ibm_logo.ch8');
         } catch {
@@ -19,8 +19,8 @@ describe('order', () => {
         cpu.readRom(romBuffer);
     });
 
-    after(function() {
-        console.log('COMPLETE!')
+    after(function () {
+        console.log('COMPLETE!');
     });
 
     it('00E0 - CLS', () => {

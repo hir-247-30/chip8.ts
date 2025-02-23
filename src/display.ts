@@ -7,8 +7,8 @@ export class Display {
     screenBox: blessed.Widgets.BoxElement;
     keyInput: number|null;
 
-    constructor() {
-        this.keyInput       = null
+    constructor () {
+        this.keyInput = null;
         this.displayBuffer = this.initDisplay();
         this.screen = blessed.screen({
             smartCSR: true
@@ -45,16 +45,16 @@ export class Display {
             if (keyboardMapper.has(key.name)) {
                 this.keyInput = keyboardMapper.get(key.name) ?? null;
             }
-        })
+        });
 
         // 無理やりkeyup表現
         setInterval(() => {
             if (this.keyInput !== null) this.keyInput = null;
-        }, 300)
+        }, 300);
     }
 
     initDisplay () {
-        let displayBuffer: number[][] = [];
+        const displayBuffer: number[][] = [];
         for (let i = 0; i < DISPLAY_HEIGHT; i++) {
             displayBuffer[i] = [];
             for (let j = 0; j < DISPLAY_WIDTH; j++) {
