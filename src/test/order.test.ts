@@ -3,7 +3,7 @@ import { CPU } from '../cpu';
 import { Display } from '../display';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from '../define';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u16 } from '../common';
 
 describe('order', () => {
     const cpu = new CPU();
@@ -33,7 +33,7 @@ describe('order', () => {
 
     it('00EE - RET', () => {
         cpu.stack[cpu.stackPointer] = 0x300;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._ret();
         assert.deepEqual(cpu.programCounter, 0x300);
     });
@@ -45,7 +45,7 @@ describe('order', () => {
 
     // なんか怪しいような
     it('2nnn - CALL addr', () => {
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._callAddr(0x0123);
         assert.deepEqual(cpu.stack[cpu.stackPointer], 0x200);
         assert.deepEqual(cpu.programCounter, 0x123);
@@ -54,13 +54,13 @@ describe('order', () => {
     it('3xkk - SE Vx, byte', () => {
         // v[x] == kk
         cpu.registerV[0xA] = 0x45;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._seVxByte(0x000A, 0x0045);
         assert.deepEqual(cpu.programCounter, 0x200 + 2);
 
         // v[x] != kk
         cpu.registerV[0xA] = 0x44;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._seVxByte(0x000A, 0x0045);
         assert.deepEqual(cpu.programCounter, 0x200 + 0);
     });
@@ -68,13 +68,13 @@ describe('order', () => {
     it('4xkk - SNE Vx, byte', () => {
         // v[x] != kk
         cpu.registerV[0x1] = 0x10;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._sneVxByte(0x1, 0x12);
         assert.deepEqual(cpu.programCounter, 0x200 + 2);
 
         // v[x] == kk
         cpu.registerV[0x1] = 0x12;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._sneVxByte(0x1, 0x12);
         assert.deepEqual(cpu.programCounter, 0x200 + 0);
     });
@@ -83,14 +83,14 @@ describe('order', () => {
         // v[x] == v[y]
         cpu.registerV[0x2] = 0x30;
         cpu.registerV[0x3] = 0x30;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._seVxVy(0x2, 0x3);
         assert.deepEqual(cpu.programCounter, 0x200 + 2);
 
         // v[x] != v[y]
         cpu.registerV[0x2] = 0x31;
         cpu.registerV[0x3] = 0x30;
-        cpu.programCounter = 0x200;
+        cpu.programCounter = u16(0x200);
         cpu._seVxVy(0x2, 0x3);
         assert.deepEqual(cpu.programCounter, 0x200 + 0);
     });

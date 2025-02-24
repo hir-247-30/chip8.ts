@@ -1,5 +1,5 @@
 import blessed from 'blessed';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './define';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './common';
 
 export class Display {
     displayBuffer: number[][];

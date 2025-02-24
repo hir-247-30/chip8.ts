@@ -1,8 +1,6 @@
 import * as fs from 'fs';
 import { CPU } from '../src/cpu';
 
-console.log('chip8 start');
-
 let romBuffer: Buffer<ArrayBufferLike>;
 try {
     const name = process.argv[2] ?? 'ibm_logo.ch8';

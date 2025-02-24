@@ -1,53 +1,54 @@
 import pino from 'pino';
 import { Display } from './display';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './define';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16 } from './common';
 
 export class CPU {
     // レジスタ定義
     memory        : Uint8Array;
     registerV     : Uint8Array;
-    indexRegisterI: number;
-    programCounter: number;
+    indexRegisterI: u16;
+    programCounter: u16;
     stack         : Uint16Array;
-    stackPointer  : number;
-    delayTimer    : number;
-    soundTimer    : number;
-    // フォントセット
-    #FONTSET: number[] = [
-        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
-        0x20, 0x60, 0x20, 0x20, 0x70, // 1
-        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
-        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
-        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
-        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
-        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
-        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
-        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
-        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
-        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
-        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
-        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
-        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
-        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-        0xF0, 0x80, 0xF0, 0x80, 0x80, // F
-    ];
+    stackPointer  : u8;
+    delayTimer    : u8;
+    soundTimer    : u8;
+    #fontset      : Uint8Array;
+
     // ディスプレイ
     display: Display;
 
-    #debug: boolean = false;
-    #logger;
+    #debug : boolean = false;
+    #logger: pino.BaseLogger|undefined;
 
     constructor () {
         // レジスタ初期化
         this.memory         = new Uint8Array(4096);
         this.registerV      = new Uint8Array(16);
-        this.indexRegisterI = 0; // 16ビット
-        this.programCounter = 0x200; // プログラムは0x200から
+        this.indexRegisterI = u16(0);
+        this.programCounter = u16(0x200); // プログラムは0x200から
         this.stack          = new Uint16Array(16);
-        this.stackPointer   = 0; // 8ビット
-        this.delayTimer     = 0;
-        this.soundTimer     = 0;
-
+        this.stackPointer   = u8(0);
+        this.delayTimer     = u8(0);
+        this.soundTimer     = u8(0);
+        this.#fontset       = new Uint8Array([
+            0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+            0x20, 0x60, 0x20, 0x20, 0x70, // 1
+            0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+            0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+            0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+            0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+            0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+            0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+            0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+            0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+            0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+            0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+            0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+            0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+            0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+            0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+        ]);
+        
         this.display = new Display();
 
         if(this.#debug) {
@@ -67,8 +68,8 @@ export class CPU {
     // ROMを読み込む
     readRom (romBuffer: Buffer<ArrayBufferLike>) {
         // 511バイトまでフォントセットを埋める
-        for (let i = 0; i < this.#FONTSET.length; i++) {
-            this.memory[i] = this.#FONTSET[i];
+        for (let i = 0; i < this.#fontset.length; i++) {
+            this.memory[i] = this.#fontset[i];
         }
         // 512バイトからROMを読み込ませる
         for (let i = 0; i < romBuffer.length; i++) {
@@ -86,7 +87,7 @@ export class CPU {
         this.display.renderDisplay();
 
         const opcode = this._readOpCode();
-        this.programCounter += 2;
+        this.programCounter = u16(this.programCounter + 2);
 
         // c x y d に命令コードを分割
         // ニブルという概念を使う
@@ -264,30 +265,30 @@ export class CPU {
     }
 
     _ret () {
-        this.programCounter = this.stack[this.stackPointer];
+        this.programCounter = u16(this.stack[this.stackPointer]);
         this.stackPointer--;
     }
 
     _jpAddr (nnn: number) {
-        this.programCounter = nnn;
+        this.programCounter = u16(nnn);
     }
 
     _callAddr (nnn: number) {
         this.stackPointer++;
         this.stack[this.stackPointer] = this.programCounter;
-        this.programCounter = nnn;
+        this.programCounter = u16(nnn);
     }
 
     _seVxByte (x: number, kk: number) {
-        if (this.registerV[x] === kk) this.programCounter += 2;
+        if (this.registerV[x] === kk) this.programCounter = u16(this.programCounter + 2);
     }
 
     _sneVxByte (x: number, kk: number) {
-        if (this.registerV[x] !== kk) this.programCounter += 2;
+        if (this.registerV[x] !== kk) this.programCounter = u16(this.programCounter + 2);
     }
 
     _seVxVy (x: number, y: number) {
-        if (this.registerV[x] === this.registerV[y]) this.programCounter += 2;
+        if (this.registerV[x] === this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _ldVxByte (x: number, kk: number) {
@@ -340,15 +341,15 @@ export class CPU {
     }
 
     _sneVxVy (x: number, y: number) {
-        this.programCounter += (this.registerV[x] !== this.registerV[y]) ? 2 : 0;
+        if (this.registerV[x] !== this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _ldIAddr (nnn: number) {
-        this.indexRegisterI = nnn;
+        this.indexRegisterI = u16(nnn);
     }
 
     _jpV0Addr (nnn: number) {
-        this.programCounter = nnn + this.registerV[0];
+        this.programCounter = u16(nnn + this.registerV[0]);
     }
 
     _rndVxByte (x: number, kk: number) {
@@ -379,11 +380,11 @@ export class CPU {
     }
 
     _skpVx (x: number) {
-        if (this.display.keyInput === this.registerV[x]) this.programCounter += 2;
+        if (this.display.keyInput === this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _sknpVx (x: number) {
-        if (this.display.keyInput !== this.registerV[x]) this.programCounter += 2;
+        if (this.display.keyInput !== this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _ldVxDt (x: number) {
@@ -397,24 +398,24 @@ export class CPU {
         }
         // されていない（プログラムカウンタを進めずに待つ）
         else {
-            this.programCounter -= 2;
+            this.programCounter = u16(this.programCounter - 2);
         }
     }
 
     _ldDtVx (x: number) {
-        this.delayTimer = this.registerV[x];
+        this.delayTimer = u8(this.registerV[x]);
     }
 
     _ldStVx (x: number) {
-        this.soundTimer = this.registerV[x];
+        this.soundTimer = u8(this.registerV[x]);
     }
 
     _addIVx (x: number) {
-        this.indexRegisterI += this.registerV[x];
+        this.indexRegisterI = u16(this.indexRegisterI + this.registerV[x]);
     }
 
     _ldFVx (x: number) {
-        this.indexRegisterI = this.registerV[x] * 0x5;
+        this.indexRegisterI = u16(this.registerV[x] * 0x5);
     }
 
     _ldBVx (x: number) {

@@ -8,6 +8,10 @@
     "test": "npx tsc --noEmit && npx eslint . --ext .ts && mocha -r tsx 'src/test/**/*.ts'",
     "format": "npx eslint . --fix --ext .ts"
   },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "author": "hir-247-30",
   "license": "ISC",
   "devDependencies": {
