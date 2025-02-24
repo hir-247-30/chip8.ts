@@ -3,7 +3,7 @@ import { CPU } from '../cpu';
 import { Display } from '../display';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u16 } from '../common';
+import { u16 } from '../common';
 
 describe('order', () => {
     const cpu = new CPU();
@@ -24,9 +24,12 @@ describe('order', () => {
     });
 
     it('00E0 - CLS', () => {
-        display.displayBuffer = new Array(DISPLAY_WIDTH * DISPLAY_HEIGHT).fill(1);
+        const x = 8;
+        const y = 8;
+        const value = 1;
+        display.setDisplayPixel({ x, y, value });
         display.clearDisplay();
-        display.displayBuffer.forEach(pixel => {
+        display.getDisplay().forEach(pixel => {
             assert.deepEqual(pixel[0], 0);
         });
     });

@@ -368,11 +368,12 @@ export class CPU {
                 const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
                 const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
 
-                const collision = this.display.displayBuffer[currY][currX] === 1;
-                this.display.displayBuffer[currY][currX] ^= 1;
+                const pixel = this.display.getDisplayPixel({ y: currY, x: currX });
+                const xor = (pixel ^ 1) as 0|1;
+                this.display.setDisplayPixel({ y: currY, x: currX, value: xor });
 
                 // 既存のビットが立っていたら衝突
-                if (collision) this.registerV[0xf] = 1;
+                if (pixel === 1) this.registerV[0xf] = 1;
 
                 this.display.renderDisplay();
             }
@@ -458,7 +459,7 @@ export class CPU {
             'SP'     : this.stackPointer,
             'DT'     : this.delayTimer,
             'ST'     : this.soundTimer,
-            'Display': this.display.displayBuffer,
+            'Display': this.display.getDisplay(),
         };
         this.#logger.trace(dump);
     }

@@ -2,14 +2,14 @@ import blessed from 'blessed';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './common';
 
 export class Display {
-    displayBuffer: number[][];
+    #displayBuffer: number[][];
     screen: blessed.Widgets.Screen;
     screenBox: blessed.Widgets.BoxElement;
     keyInput: number|null;
 
     constructor () {
         this.keyInput = null;
-        this.displayBuffer = this.initDisplay();
+        this.#displayBuffer = this.initDisplay();
         this.screen = blessed.screen({
             smartCSR: true
         });
@@ -53,6 +53,20 @@ export class Display {
         }, 300);
     }
 
+    getDisplay () {
+        return this.#displayBuffer;
+    }
+
+    getDisplayPixel (params: { y: number, x: number }) {
+        const { x, y } = params;
+        return this.#displayBuffer[y][x] as 0|1;
+    }
+
+    setDisplayPixel (params: { y: number, x: number, value: 0|1 }) {
+        const { x, y, value } = params;
+        return this.#displayBuffer[y][x] = value;
+    }
+
     initDisplay () {
         const displayBuffer: number[][] = [];
         for (let i = 0; i < DISPLAY_HEIGHT; i++) {
@@ -66,7 +80,7 @@ export class Display {
 
     renderDisplay () {
         // バッファの内容をディスプレイで表現
-        const render = this.displayBuffer.map(row =>
+        const render = this.#displayBuffer.map(row =>
             row.map(pxl => (pxl ? '█' : ' ')).join('')
         ).join('\n');
         
@@ -75,7 +89,7 @@ export class Display {
     }
 
     clearDisplay () {
-        this.displayBuffer = this.initDisplay();
+        this.#displayBuffer = this.initDisplay();
         this.renderDisplay();
     }
 }
