@@ -110,141 +110,77 @@ export class CPU {
         const kk  = (opcode & 0x00FF);
 
         const hexOrder = [c.toString(16), x.toString(16), y.toString(16), d.toString(16)].join('-');
-        switch (opcode & 0xF000) {
-            case 0x0000: {
-                switch (opcode & 0x00FF) {
-                    case 0x00E0:
-                        this._cls();
-                        break;
-                    case 0x00EE:
-                        this._ret();
-                        break;
-                    default:
-                        throw new Error(`undefined opcode ${hexOrder}`);
-                };
-                break;
-            };
-            case 0x1000:
-                this._jpAddr(nnn);
-                break;
-            case 0x2000:
-                this._callAddr(nnn);
-                break;
-            case 0x3000:
-                this._seVxByte({ x, kk });
-                break;
-            case 0x4000:
-                this._sneVxByte({ x, kk });
-                break;
-            case 0x5000:
-                this._seVxVy({ x, y });
-                break;
-            case 0x6000:
-                this._ldVxByte({ x, kk });
-                break;
-            case 0x7000:
-                this._addVxByte({ x, kk });
-                break;
-            case 0x8000: {
-                switch (opcode & 0x000F) {
-                    case 0x0000:
-                        this._ldVxVy({ x, y });
-                        break;
-                    case 0x0001:
-                        this._orVxVy({ x, y });
-                        break;
-                    case 0x0002:
-                        this._andVxVy({ x, y });
-                        break;
-                    case 0x0003:
-                        this._xorVxVy({ x, y });
-                        break;
-                    case 0x0004:
-                        this._addVxVy({ x, y });
-                        break;
-                    case 0x0005:
-                        this._subVxVy({ x, y });
-                        break;
-                    case 0x0006:
-                        this._shrVx(x);
-                        break;
-                    case 0x0007:
-                        this._subnVxVy({ x, y });
-                        break;
-                    case 0x000E:
-                        this._shlVx(x);
-                        break;
-                    default:
-                        throw new Error(`undefined opcode ${hexOrder}`);
-                };
-                break;
-            };
-            case 0x9000:
-                this._sneVxVy({ x, y });
-                break;
-            case 0xA000:
-                this._ldIAddr(nnn);
-                break;
-            case 0xB000:
-                this._jpV0Addr(nnn);
-                break;
-            case 0xC000:
-                this._rndVxByte({ x, kk });
-                break;
-            case 0xD000:
-                this._drwVxVyNibble({ x, y, n: d });
-                break;
-            case 0xE000: {
-                switch (opcode & 0x00FF) {
-                    case 0x009E:
-                        this._skpVx(x);
-                        break;
-                    case 0x00A1:
-                        this._sknpVx(x);
-                        break;
-                    default:
-                        throw new Error(`undefined opcode ${hexOrder}`);
-                };
-                break;
-            };
-            case 0xF000: {
-                switch (opcode & 0x00FF) {
-                    case 0x0007:
-                        this._ldVxDt(x);
-                        break;
-                    case 0x000A:
-                        this._ldVxK(x);
-                        break;
-                    case 0x0015:
-                        this._ldDtVx(x);
-                        break;
-                    case 0x0018:
-                        this._ldStVx(x);
-                        break;
-                    case 0x001E:
-                        this._addIVx(x);
-                        break;
-                    case 0x0029:
-                        this._ldFVx(x);
-                        break;
-                    case 0x0033:
-                        this._ldBVx(x);
-                        break;
-                    case 0x0055:
-                        this._ldIVx(x);
-                        break;
-                    case 0x0065:
-                        this._ldVxI(x);
-                        break;
-                    default:
-                        throw new Error(`undefined opcode ${hexOrder}`);
-                };
-                break;
-            };
-            default:
-                throw new Error(`undefined opcode ${hexOrder}`);
-        }
         this.#debugDump(hexOrder);
+
+        switch (opcode & 0xF000) {
+            case 0x0000: return this._handle0({ opcode, hexOrder });
+            case 0x1000: return this._jpAddr(nnn);
+            case 0x2000: return this._callAddr(nnn);
+            case 0x3000: return this._seVxByte({ x, kk });
+            case 0x4000: return this._sneVxByte({ x, kk });
+            case 0x5000: return this._seVxVy({ x, y });
+            case 0x6000: return this._ldVxByte({ x, kk });
+            case 0x7000: return this._addVxByte({ x, kk });
+            case 0x8000: return this._handle8({ x, y, opcode, hexOrder });
+            case 0x9000: return this._sneVxVy({ x, y });
+            case 0xA000: return this._ldIAddr(nnn);
+            case 0xB000: return this._jpV0Addr(nnn);
+            case 0xC000: return this._rndVxByte({ x, kk });
+            case 0xD000: return this._drwVxVyNibble({ x, y, n: d });
+            case 0xE000: return this._handleE({ x, opcode, hexOrder });
+            case 0xF000: return this._handleF({ x, opcode, hexOrder });
+            default: throw new Error(`undefined opcode ${hexOrder}`);
+        }
+    }
+
+    _handle0 (args: { opcode: number, hexOrder: string}) {
+        const { opcode, hexOrder } = args;
+        switch (opcode & 0x00FF) {
+            case 0x00E0: return this._cls();
+            case 0x00EE: return this._ret();
+            default: throw new Error(`undefined opcode ${hexOrder}`);
+        };
+    }
+
+    _handle8 (args: { x: number, y: number, opcode: number, hexOrder: string}) {
+        const { x, y, opcode, hexOrder } = args;
+        switch (opcode & 0x000F) {
+            case 0x0000: return this._ldVxVy({ x, y });
+            case 0x0001: return this._orVxVy({ x, y });
+            case 0x0002: return this._andVxVy({ x, y });
+            case 0x0003: return this._xorVxVy({ x, y });
+            case 0x0004: return this._addVxVy({ x, y });
+            case 0x0005: return this._subVxVy({ x, y });
+            case 0x0006: return this._shrVx(x);
+            case 0x0007: return this._subnVxVy({ x, y });
+            case 0x000E: return this._shlVx(x);
+            default: throw new Error(`undefined opcode ${hexOrder}`);
+        };
+    }
+
+    _handleE (args: { x: number, opcode: number, hexOrder: string}) {
+        const { x, opcode, hexOrder } = args;
+        switch (opcode & 0x00FF) {
+            case 0x009E: return this._skpVx(x);
+            case 0x00A1: return this._sknpVx(x);
+            default: throw new Error(`undefined opcode ${hexOrder}`);
+        };
+    }
+
+    _handleF (args: { x: number, opcode: number, hexOrder: string}) {
+        const { x, opcode, hexOrder } = args;
+        switch (opcode & 0x00FF) {
+            case 0x0007: return this._ldVxDt(x);
+            case 0x000A: return this._ldVxK(x);
+            case 0x0015: return this._ldDtVx(x);
+            case 0x0018: return this._ldStVx(x);
+            case 0x001E: return this._addIVx(x);
+            case 0x0029: return this._ldFVx(x);
+            case 0x0033: return this._ldBVx(x);
+            case 0x0055: return this._ldIVx(x);
+            case 0x0065: return this._ldVxI(x);
+            default: throw new Error(`undefined opcode ${hexOrder}`);
+        };
     }
 
     // プログラムカウンタから2バイト読む
