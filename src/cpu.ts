@@ -131,45 +131,45 @@ export class CPU {
                 this._callAddr(nnn);
                 break;
             case 0x3000:
-                this._seVxByte(x, kk);
+                this._seVxByte({ x, kk });
                 break;
             case 0x4000:
-                this._sneVxByte(x, kk);
+                this._sneVxByte({ x, kk });
                 break;
             case 0x5000:
-                this._seVxVy(x, y);
+                this._seVxVy({ x, y });
                 break;
             case 0x6000:
-                this._ldVxByte(x, kk);
+                this._ldVxByte({ x, kk });
                 break;
             case 0x7000:
-                this._addVxByte(x, kk);
+                this._addVxByte({ x, kk });
                 break;
             case 0x8000: {
                 switch (opcode & 0x000F) {
                     case 0x0000:
-                        this._ldVxVy(x, y);
+                        this._ldVxVy({ x, y });
                         break;
                     case 0x0001:
-                        this._orVxVy(x, y);
+                        this._orVxVy({ x, y });
                         break;
                     case 0x0002:
-                        this._andVxVy(x, y);
+                        this._andVxVy({ x, y });
                         break;
                     case 0x0003:
-                        this._xorVxVy(x, y);
+                        this._xorVxVy({ x, y });
                         break;
                     case 0x0004:
-                        this._addVxVy(x, y);
+                        this._addVxVy({ x, y });
                         break;
                     case 0x0005:
-                        this._subVxVy(x, y);
+                        this._subVxVy({ x, y });
                         break;
                     case 0x0006:
                         this._shrVx(x);
                         break;
                     case 0x0007:
-                        this._subnVxVy(x, y);
+                        this._subnVxVy({ x, y });
                         break;
                     case 0x000E:
                         this._shlVx(x);
@@ -180,7 +180,7 @@ export class CPU {
                 break;
             };
             case 0x9000:
-                this._sneVxVy(x, y);
+                this._sneVxVy({ x, y });
                 break;
             case 0xA000:
                 this._ldIAddr(nnn);
@@ -189,10 +189,10 @@ export class CPU {
                 this._jpV0Addr(nnn);
                 break;
             case 0xC000:
-                this._rndVxByte(x, kk);
+                this._rndVxByte({ x, kk });
                 break;
             case 0xD000:
-                this._drwVxVyNibble(x, y, d);
+                this._drwVxVyNibble({ x, y, n: d });
                 break;
             case 0xE000: {
                 switch (opcode & 0x00FF) {
@@ -279,48 +279,59 @@ export class CPU {
         this.programCounter = u16(nnn);
     }
 
-    _seVxByte (x: number, kk: number) {
+    _seVxByte (args: { x: number, kk: number }) {
+        const { x, kk } = args;
         if (this.registerV[x] === kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _sneVxByte (x: number, kk: number) {
+    _sneVxByte (args: { x: number, kk: number }) {
+        const { x, kk } = args;
         if (this.registerV[x] !== kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _seVxVy (x: number, y: number) {
+    _seVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         if (this.registerV[x] === this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _ldVxByte (x: number, kk: number) {
+    _ldVxByte (args: { x: number, kk: number }) {
+        const { x, kk } = args;
         this.registerV[x] = kk;
     }
 
-    _addVxByte (x: number, kk: number) {
+    _addVxByte (args: { x: number, kk: number }) {
+        const { x, kk } = args;
         this.registerV[x] += kk;
     }
     
-    _ldVxVy (x: number, y: number) {
+    _ldVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[x] = this.registerV[y];
     }
 
-    _orVxVy (x: number, y: number) {
+    _orVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[x] |= this.registerV[y];
     }
 
-    _andVxVy (x: number, y: number) {
+    _andVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[x] &= this.registerV[y];
     }
 
-    _xorVxVy (x: number, y: number) {
+    _xorVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[x] ^= this.registerV[y];
     }
 
-    _addVxVy (x: number, y: number) {
+    _addVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[0xF] = (this.registerV[x] + this.registerV[y] > 0xFF) ? 1 : 0;
         this.registerV[x] += this.registerV[y];
     }
 
-    _subVxVy (x: number, y: number) {
+    _subVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[0xF] = (this.registerV[x] > this.registerV[y]) ? 1 : 0;
         this.registerV[x] -= this.registerV[y];
     }
@@ -330,7 +341,8 @@ export class CPU {
         this.registerV[x] >>= 1;
     }
 
-    _subnVxVy (x: number, y: number) {
+    _subnVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         this.registerV[0xF] = (this.registerV[y] > this.registerV[x]) ? 1 : 0;
         this.registerV[x] = this.registerV[y] - this.registerV[x];
     }
@@ -340,7 +352,8 @@ export class CPU {
         this.registerV[x] <<= 1;
     }
 
-    _sneVxVy (x: number, y: number) {
+    _sneVxVy (args: { x: number, y: number }) {
+        const { x, y } = args;
         if (this.registerV[x] !== this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
@@ -352,12 +365,14 @@ export class CPU {
         this.programCounter = u16(nnn + this.registerV[0]);
     }
 
-    _rndVxByte (x: number, kk: number) {
+    _rndVxByte (args: { x: number, kk: number }) {
+        const { x, kk } = args;
         this.registerV[x] = Math.floor(Math.random() * 0xFF) & kk;
     }
 
     // dもnも一緒に扱ってOK
-    _drwVxVyNibble (x: number, y: number, n: number) {
+    _drwVxVyNibble (args: { x: number, y: number , n: number}) {
+        const { x, y, n } = args;
         this.registerV[0xf] = 0;
 
         for (let byteOffset = 0; byteOffset < n; byteOffset++) {
@@ -368,9 +383,9 @@ export class CPU {
                 const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
                 const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
 
-                const pixel = this.display.getDisplayPixel({ y: currY, x: currX });
+                const pixel = this.display.getDisplayPixel({ currY, currX });
                 const xor = (pixel ^ 1) as 0|1;
-                this.display.setDisplayPixel({ y: currY, x: currX, value: xor });
+                this.display.setDisplayPixel({ currY, currX, value: xor });
 
                 // 既存のビットが立っていたら衝突
                 if (pixel === 1) this.registerV[0xf] = 1;
