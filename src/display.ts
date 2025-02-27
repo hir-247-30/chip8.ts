@@ -25,7 +25,7 @@ export class Display {
               type: 'line',
             },
             style: {
-              fg: 'white',
+              fg: '#006400',
               bg: 'black',
             }
         });
