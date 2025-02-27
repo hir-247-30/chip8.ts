@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { Display } from './display';
+import { KeyBoard } from './keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16 } from './common';
 
 export class CPU {
@@ -16,6 +17,7 @@ export class CPU {
 
     // ディスプレイ
     display: Display;
+    keyboard: KeyBoard;
 
     #debug : boolean = false;
     #logger: pino.BaseLogger|undefined;
@@ -48,8 +50,9 @@ export class CPU {
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ]);
-        
-        this.display = new Display();
+
+        this.keyboard = new KeyBoard();
+        this.display = new Display(this.keyboard);
 
         if(this.#debug) {
             this.#logger = pino({
@@ -332,11 +335,11 @@ export class CPU {
     }
 
     _skpVx (x: number) {
-        if (this.display.keyInput === this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
+        if (this.keyboard.getKey() === this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _sknpVx (x: number) {
-        if (this.display.keyInput !== this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
+        if (this.keyboard.getKey() !== this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
     _ldVxDt (x: number) {
@@ -345,8 +348,9 @@ export class CPU {
 
     _ldVxK (x: number) {
         // キーが押下されている
-        if (this.display.keyInput !== null) {
-            this.registerV[x] = this.display.keyInput;
+        const key = this.keyboard.getKey();
+        if (key !== null) {
+            this.registerV[x] = key;
         }
         // されていない（プログラムカウンタを進めずに待つ）
         else {

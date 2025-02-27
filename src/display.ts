@@ -1,14 +1,13 @@
 import blessed from 'blessed';
+import { KeyBoard } from './keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './common';
 
 export class Display {
     #displayBuffer: number[][];
     screen        : blessed.Widgets.Screen;
     screenBox     : blessed.Widgets.BoxElement;
-    keyInput      : number|null;
 
-    constructor () {
-        this.keyInput = null;
+    constructor (keyboard: KeyBoard) {
         this.#displayBuffer = this.initDisplay();
         this.screen = blessed.screen({
             smartCSR: true
@@ -33,23 +32,14 @@ export class Display {
         this.screen.append(this.screenBox);
         this.screen.render();
 
-        const keyboardMapper = new Map([
-            ['1', 0x1], ['2', 0x2], ['3', 0x3], ['4', 0xC],
-            ['q', 0x4], ['w', 0x5], ['e', 0x6], ['r', 0xD],
-            ['a', 0x7], ['s', 0x8], ['d', 0x9], ['f', 0xE],
-            ['z', 0xA], ['x', 0x0], ['c', 0xB], ['v', 0xF],
-        ]);
-
         this.screen.on('keypress', (_, key) => {
             if (key.ctrl && key.name === 'c') process.exit();
-            if (keyboardMapper.has(key.name)) {
-                this.keyInput = keyboardMapper.get(key.name) ?? null;
-            }
+            keyboard.setKey(key.name);
         });
 
         // 無理やりkeyup表現
         setInterval(() => {
-            if (this.keyInput !== null) this.keyInput = null;
+            if (keyboard.getKey() !== null) keyboard.initKey();
         }, 300);
     }
 

@@ -1,13 +1,15 @@
 import * as fs from 'fs';
 import { CPU } from '../cpu';
 import { Display } from '../display';
+import { KeyBoard } from '../keyboard';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
 import { u8, u16 } from '../common';
 
 describe('order', () => {
-    const cpu     = new CPU();
-    const display = new Display();
+    const cpu      = new CPU();
+    const keyboard = new KeyBoard();
+    const display  = new Display(keyboard);
 
     before(function () {
         let romBuffer: Buffer<ArrayBufferLike>;
@@ -247,13 +249,13 @@ describe('order', () => {
 
     it('Ex9E - SKP Vx', () => {
         cpu.registerV[0] = 0xA;
-        cpu.display.keyInput = 0xA;
+        cpu.keyboard.setKey('z'); // 0xA
         cpu.programCounter = u16(0x200);
         cpu._skpVx(0x0);
         assert.deepEqual(cpu.programCounter, u16(0x200 + 0x2));
 
         cpu.registerV[0] = 0xA;
-        cpu.display.keyInput = null;
+        cpu.keyboard.initKey();
         cpu.programCounter = u16(0x200);
         cpu._skpVx(0x0);
         assert.deepEqual(cpu.programCounter, u16(0x200));
@@ -261,13 +263,13 @@ describe('order', () => {
 
     it('ExA1 - SKNP Vx', () => {
         cpu.registerV[1] = 0xA;
-        cpu.display.keyInput = 0xA;
+        cpu.keyboard.setKey('z'); // 0xA
         cpu.programCounter = u16(0x200);
         cpu._sknpVx(0x1);
         assert.deepEqual(cpu.programCounter, u16(0x200));
 
         cpu.registerV[1] = 0xA;
-        cpu.display.keyInput = null;
+        cpu.keyboard.initKey();
         cpu.programCounter = u16(0x200);
         cpu._sknpVx(0x1);
         assert.deepEqual(cpu.programCounter, u16(0x200 + 0x2));
@@ -281,11 +283,11 @@ describe('order', () => {
 
     it('Fx0A - LD Vx, K', () => {
         cpu.programCounter = u16(0x200 + 0x2);
-        cpu.display.keyInput = null;
+        cpu.keyboard.initKey();
         cpu._ldVxK(0x0);
         assert.deepEqual(cpu.programCounter, 0x200);
 
-        cpu.display.keyInput = 0xC;
+        cpu.keyboard.setKey('4'); // 0xC
         cpu._ldVxK(0x0);
         assert.deepEqual(cpu.registerV[0], 0xC);
     });
