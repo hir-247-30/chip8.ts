@@ -1,4 +1,3 @@
 node_modules/
 logs/
-docs/**.js
-docs/test
+docs/chip8.js
