@@ -22,7 +22,7 @@ export class CPU {
     #debug : boolean = false;
     #logger: pino.BaseLogger|undefined;
 
-    constructor () {
+    constructor (display: Display, keyboard: KeyBoard) {
         // レジスタ初期化
         this.memory         = new Uint8Array(4096);
         this.registerV      = new Uint8Array(16);
@@ -51,8 +51,8 @@ export class CPU {
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ]);
 
-        this.keyboard = new KeyBoard();
-        this.display = new Display(this.keyboard);
+        this.keyboard = keyboard;
+        this.display = display;
 
         if(this.#debug) {
             this.#logger = pino({

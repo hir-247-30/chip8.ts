@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import { CPU } from '../src/cpu';
+import { Display } from './display';
+import { KeyBoard } from './keyboard';
 
 let romBuffer: Buffer<ArrayBufferLike>;
 try {
@@ -12,7 +14,9 @@ try {
 // ログファイル削除
 if (fs.existsSync('logs')) fs.rmSync('logs', { recursive: true, force: true });
 
-const cpu = new CPU();
+const keyboard = new KeyBoard();
+const display = new Display(keyboard);
+const cpu = new CPU(display, keyboard);
 cpu.readRom(romBuffer);
 
 function loop () {

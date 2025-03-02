@@ -7,9 +7,9 @@ import { describe, it } from 'mocha';
 import { u8, u16 } from '../common';
 
 describe('order', () => {
-    const cpu      = new CPU();
     const keyboard = new KeyBoard();
     const display  = new Display(keyboard);
+    const cpu      = new CPU(display, keyboard);
 
     before(function () {
         let romBuffer: Buffer<ArrayBufferLike>;
