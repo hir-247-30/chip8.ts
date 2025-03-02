@@ -1,17 +1,22 @@
-import { KeyBoard } from './keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './common';
 
-export class WebDisplay {
+import { Display } from './abstractDisplay';
+import { KeyBoard } from '../keyboard';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR } from '../common';
+
+export class WebDisplay extends Display {
     #displayBuffer: number[][];
     #canvas: HTMLCanvasElement;
     #ctx: CanvasRenderingContext2D;
+    #zoom: number = 10;
 
     constructor (keyboard: KeyBoard) {
+        super();
+
         this.#displayBuffer = this.initDisplay();
         this.#canvas = document.querySelector('canvas')!;
         this.#ctx = this.#canvas.getContext("2d")!;
-        this.#ctx.fillStyle = 'black';
-        this.#ctx.fillRect(0, 0, DISPLAY_WIDTH * 10, DISPLAY_HEIGHT * 10);
+        this.#ctx.fillStyle = BACKGROUND_COLOR;
+        this.#ctx.fillRect(0, 0, DISPLAY_WIDTH * this.#zoom, DISPLAY_HEIGHT * this.#zoom);
 
         document.addEventListener('keydown', event => {
             keyboard.setKey(event.key);
@@ -51,11 +56,11 @@ export class WebDisplay {
         for (let y = 0; y < DISPLAY_HEIGHT; y++) {
             for (let x = 0; x < DISPLAY_WIDTH; x++) {
                 if (this.#displayBuffer[y][x]) {
-                    this.#ctx.fillStyle = '#006400';
+                    this.#ctx.fillStyle = FOREGROUND_COLOR;
                 } else {
-                    this.#ctx.fillStyle = 'black';
+                    this.#ctx.fillStyle = BACKGROUND_COLOR;
                 }
-                this.#ctx.fillRect(x * 10, y * 10, 10, 10);
+                this.#ctx.fillRect(x * this.#zoom, y * this.#zoom, this.#zoom, this.#zoom);
             }
         }
     }

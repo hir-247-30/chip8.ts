@@ -1,6 +1,6 @@
-import { CPU } from '../src/cpu';
-import { WebDisplay } from './webdisplay';
-import { KeyBoard } from './keyboard';
+import { CPU } from '../cpu';
+import { WebDisplay } from '../display/webDisplay';
+import { KeyBoard } from '../keyboard';
 
 const romBuffer = await loadBuffer();
 

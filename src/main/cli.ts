@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { CPU } from '../src/cpu';
-import { Display } from './display';
-import { KeyBoard } from './keyboard';
+import { CPU } from '../cpu';
+import { CliDisplay } from '../display/cliDisplay';
+import { KeyBoard } from '../keyboard';
 
 let romBuffer: Buffer<ArrayBufferLike>;
 try {
@@ -15,7 +15,7 @@ try {
 if (fs.existsSync('logs')) fs.rmSync('logs', { recursive: true, force: true });
 
 const keyboard = new KeyBoard();
-const display = new Display(keyboard);
+const display = new CliDisplay(keyboard);
 const cpu = new CPU(display, keyboard);
 cpu.readRom(romBuffer);
 

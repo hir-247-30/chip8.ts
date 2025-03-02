@@ -4,10 +4,6 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "outDir": "docs",
   },
-  "files": [
-    "src/webmain.ts",
-  ],
   "include": ["./src/**/*.ts"],
 }

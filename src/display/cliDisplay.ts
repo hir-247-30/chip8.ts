@@ -1,13 +1,16 @@
 import blessed from 'blessed';
-import { KeyBoard } from './keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT } from './common';
+import { Display } from './abstractDisplay';
+import { KeyBoard } from '../keyboard';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR } from '../common';
 
-export class Display {
+export class CliDisplay extends Display {
     #displayBuffer: number[][];
     screen        : blessed.Widgets.Screen;
     screenBox     : blessed.Widgets.BoxElement;
 
     constructor (keyboard: KeyBoard) {
+        super();
+
         this.#displayBuffer = this.initDisplay();
         this.screen = blessed.screen({
             smartCSR: true
@@ -24,8 +27,8 @@ export class Display {
               type: 'line',
             },
             style: {
-              fg: '#006400',
-              bg: 'black',
+              fg: FOREGROUND_COLOR,
+              bg: BACKGROUND_COLOR,
             }
         });
 

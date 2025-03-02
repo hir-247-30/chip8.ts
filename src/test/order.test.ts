@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { CPU } from '../cpu';
-import { Display } from '../display';
+import { CliDisplay } from '../display/cliDisplay';
 import { KeyBoard } from '../keyboard';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
@@ -8,7 +8,7 @@ import { u8, u16 } from '../common';
 
 describe('order', () => {
     const keyboard = new KeyBoard();
-    const display  = new Display(keyboard);
+    const display  = new CliDisplay(keyboard);
     const cpu      = new CPU(display, keyboard);
 
     before(function () {

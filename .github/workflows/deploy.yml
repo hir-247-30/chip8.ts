@@ -1,11 +1,10 @@
 name: Deploy GitHub Pages CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-
-  workflow_dispatch:
 
 jobs:
   build:
