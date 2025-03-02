@@ -4,9 +4,10 @@
   "description": "chip8 written in TypeScript",
   "main": "src/main.ts",
   "scripts": {
-    "start": "./node_modules/.bin/ts-node src/main.ts",
+    "start": "tsx src/main.ts",
     "test": "npx tsc --noEmit && npx eslint . --ext .ts && mocha -r tsx 'src/test/**/*.ts'",
-    "format": "npx eslint . --fix --ext .ts"
+    "format": "npx eslint . --fix --ext .ts",
+    "web": "npx tsc"
   },
   "engines": {
     "node": ">=22.0.0",
@@ -29,7 +30,6 @@
     "chai": "^5.2.0",
     "mocha": "^11.1.0",
     "pino": "^9.6.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.19.2"
   }
 }
