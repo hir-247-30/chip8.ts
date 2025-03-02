@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { Display } from './display';
+import { WebDisplay } from './webdisplay';
 import { KeyBoard } from './keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16 } from './common';
 
@@ -16,13 +17,13 @@ export class CPU {
     #fontset      : Uint8Array;
 
     // ディスプレイ
-    display: Display;
+    display: Display|WebDisplay;
     keyboard: KeyBoard;
 
     #debug : boolean = false;
     #logger: pino.BaseLogger|undefined;
 
-    constructor (display: Display, keyboard: KeyBoard) {
+    constructor (display: Display|WebDisplay, keyboard: KeyBoard) {
         // レジスタ初期化
         this.memory         = new Uint8Array(4096);
         this.registerV      = new Uint8Array(16);

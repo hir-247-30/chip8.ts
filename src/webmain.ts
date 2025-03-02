@@ -1,29 +1,26 @@
 import { CPU } from '../src/cpu';
-import { Display } from './display';
+import { WebDisplay } from './webdisplay';
 import { KeyBoard } from './keyboard';
 
-webRun();
+const romBuffer = await loadBuffer();
 
-async function webRun () {
-    const romBuffer = await loadBuffer();
+const keyboard = new KeyBoard();
+const display = new WebDisplay(keyboard);
+const cpu = new CPU(display, keyboard);
 
-    const keyboard = new KeyBoard();
-    const display = new Display(keyboard);
-    const cpu = new CPU(display, keyboard);
-
-    cpu.readRom(romBuffer);
-
-    loop(cpu);
-}
+cpu.readRom(romBuffer);
 
 async function loadBuffer (): Promise<Buffer<ArrayBufferLike>> {
-    const response = await fetch('../rom/BRIX');
+    const response = await fetch('BRIX');
     const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    // Bufferはブラウザだと使えない
+    return new Uint8Array(arrayBuffer) as Buffer<ArrayBufferLike>;
 }
 
-function loop (cpu: CPU) {
+function loop () {
     cpu.update();
     cpu.decrementTimers();
     setTimeout(loop, 5);
 }
+
+loop();

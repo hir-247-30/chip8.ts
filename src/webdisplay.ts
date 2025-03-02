@@ -48,12 +48,10 @@ export class WebDisplay {
     }
 
     renderDisplay () {
-        this.clearDisplay();
-
         this.#ctx.fillStyle = '#006400';
         for (let y = 0; y < DISPLAY_HEIGHT; y++) {
             for (let x = 0; x < DISPLAY_WIDTH; x++) {
-                if (this.#displayBuffer[x][y * DISPLAY_WIDTH]) {
+                if (this.#displayBuffer[y][x]) {
                     this.#ctx.fillRect(x * 10, y * 10, 10, 10);
                 }
             }
