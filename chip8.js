@@ -716,12 +716,12 @@ var CPU = class {
     }
   }
   // ROMを読み込む
-  readRom(romBuffer2) {
+  readRom(romBuffer) {
     for (let i = 0; i < this.#fontset.length; i++) {
       this.memory[i] = this.#fontset[i];
     }
-    for (let i = 0; i < romBuffer2.length; i++) {
-      this.memory[512 + i] = romBuffer2[i];
+    for (let i = 0; i < romBuffer.length; i++) {
+      this.memory[512 + i] = romBuffer[i];
     }
   }
   decrementTimers() {
@@ -1131,19 +1131,35 @@ var KeyBoard = class {
 };
 
 // src/main/web.ts
-var romBuffer = await loadBuffer();
 var keyboard = new KeyBoard();
 var display = new WebDisplay(keyboard);
 var cpu = new CPU(display, keyboard);
-cpu.readRom(romBuffer);
-async function loadBuffer() {
-  const response = await fetch("BRIX");
-  const arrayBuffer = await response.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
-}
+var runnning = false;
+var sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
+document.getElementById("roms").addEventListener("click", async (event) => {
+  const target = event.currentTarget;
+  const rom = target.value;
+  let romBuffer;
+  try {
+    const response = await fetch(rom);
+    const arrayBuffer = await response.arrayBuffer();
+    romBuffer = new Uint8Array(arrayBuffer);
+  } catch {
+    console.log("rom\u304C\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F");
+    return false;
+  }
+  runnning = false;
+  await sleep(100);
+  keyboard = new KeyBoard();
+  display = new WebDisplay(keyboard);
+  cpu = new CPU(display, keyboard);
+  cpu.readRom(romBuffer);
+  runnning = true;
+  loop();
+});
 function loop() {
+  if (!runnning) return;
   cpu.update();
   cpu.decrementTimers();
   setTimeout(loop, 5);
 }
-loop();
