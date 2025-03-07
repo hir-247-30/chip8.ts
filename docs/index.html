@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHIP-8 Emulator</title>
     <style>
-
         body {
             background-color: #121212;
             color: white;
@@ -33,6 +32,7 @@
         .controls {
             display: flex;
             flex-direction: row;
+            align-items: center;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -52,13 +52,32 @@
         }
 
         button {
-            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #555;
             color: white;
             cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
         }
 
         button:hover {
-            background: #2980b9;
+            background: #777;
+        }
+
+        .pause-icon {
+            width: 12px;
+            height: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pause-icon div {
+            width: 5px;
+            height: 16px;
+            background: white;
         }
 
         canvas {
@@ -79,6 +98,12 @@
                 <option value="TETRIS">TETRIS</option>
                 <option value="INVADERS">INVADERS</option>
             </select>
+            <button id="pause">
+                <div class="pause-icon">
+                    <div></div>
+                    <div></div>
+                </div>
+            </button>
         </div>
         <canvas id="screen" width="640" height="320"></canvas>
     </div>
