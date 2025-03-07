@@ -1136,12 +1136,15 @@ var display = new WebDisplay(keyboard);
 var cpu = new CPU(display, keyboard);
 var runnning = false;
 var sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
-document.getElementById("roms").addEventListener("click", async (event) => {
+document.getElementById("roms").addEventListener("change", async (event) => {
   const target = event.currentTarget;
   const rom = target.value;
   let romBuffer;
   try {
     const response = await fetch(rom);
+    if (!response.ok) {
+      throw new Error();
+    }
     const arrayBuffer = await response.arrayBuffer();
     romBuffer = new Uint8Array(arrayBuffer);
   } catch {
@@ -1155,6 +1158,10 @@ document.getElementById("roms").addEventListener("click", async (event) => {
   cpu = new CPU(display, keyboard);
   cpu.readRom(romBuffer);
   runnning = true;
+  loop();
+});
+document.getElementById("pause").addEventListener("click", () => {
+  runnning = !runnning;
   loop();
 });
 function loop() {
