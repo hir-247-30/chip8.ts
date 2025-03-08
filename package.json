@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "chip8 written in TypeScript",
   "main": "src/main/cli.ts",
+  "type": "module",
   "scripts": {
     "start": "tsx src/main/cli.ts",
     "test": "npx tsc --noEmit && npx eslint . --ext .ts && mocha -r tsx 'src/test/**/*.ts'",

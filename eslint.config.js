@@ -12,5 +12,8 @@ export default tseslint.config(
         "semi": "error",
         "space-before-function-paren": "error"
     },
+    languageOptions: {
+      sourceType: 'module',
+    },
   },
 );

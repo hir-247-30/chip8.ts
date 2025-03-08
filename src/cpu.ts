@@ -3,7 +3,7 @@ import { Display } from './display/abstractDisplay';
 import { KeyBoard } from './keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16 } from './common';
 
-export class CPU {
+export class Cpu {
     // レジスタ定義
     memory        : Uint8Array;
     registerV     : Uint8Array;

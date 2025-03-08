@@ -1,10 +1,10 @@
-import { CPU } from '../cpu';
+import { Cpu } from '../cpu';
 import { WebDisplay } from '../display/webDisplay';
 import { KeyBoard } from '../keyboard';
 
 let keyboard = new KeyBoard();
 let display  = new WebDisplay(keyboard);
-let cpu      = new CPU(display, keyboard);
+let cpu      = new Cpu(display, keyboard);
 let runnning = false;
 
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
@@ -36,7 +36,7 @@ document.getElementById('roms')!.addEventListener('change', async (event) => {
     
     keyboard = new KeyBoard();
     display  = new WebDisplay(keyboard);
-    cpu      = new CPU(display, keyboard);
+    cpu      = new Cpu(display, keyboard);
     cpu.readRom(romBuffer);
 
     runnning = true;

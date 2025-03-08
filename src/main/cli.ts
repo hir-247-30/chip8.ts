@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { CPU } from '../cpu';
+import { Cpu } from '../cpu';
 import { CliDisplay } from '../display/cliDisplay';
 import { KeyBoard } from '../keyboard';
 
@@ -16,7 +16,7 @@ if (fs.existsSync('logs')) fs.rmSync('logs', { recursive: true, force: true });
 
 const keyboard = new KeyBoard();
 const display = new CliDisplay(keyboard);
-const cpu = new CPU(display, keyboard);
+const cpu = new Cpu(display, keyboard);
 cpu.readRom(romBuffer);
 
 function loop () {

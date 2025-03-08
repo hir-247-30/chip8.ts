@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { CPU } from '../cpu';
+import { Cpu } from '../cpu';
 import { CliDisplay } from '../display/cliDisplay';
 import { KeyBoard } from '../keyboard';
 import { assert } from 'chai';
@@ -9,7 +9,7 @@ import { u8, u16 } from '../common';
 describe('order', () => {
     const keyboard = new KeyBoard();
     const display  = new CliDisplay(keyboard);
-    const cpu      = new CPU(display, keyboard);
+    const cpu      = new Cpu(display, keyboard);
 
     before(function () {
         let romBuffer: Buffer<ArrayBufferLike>;
