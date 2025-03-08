@@ -1,3 +1,4 @@
 node_modules/
 logs/
-docs/chip8.js
+public/*
+!public/index.html
