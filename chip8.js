@@ -562,7 +562,7 @@ var require_browser = __commonJS({
 });
 
 // src/cpu.ts
-var import_pino = __toESM(require_browser());
+var import_pino = __toESM(require_browser(), 1);
 
 // src/common.ts
 var DISPLAY_WIDTH = 64;
@@ -577,7 +577,7 @@ function u16(value) {
 }
 
 // src/cpu.ts
-var CPU = class {
+var Cpu = class {
   // レジスタ定義
   memory;
   registerV;
@@ -1133,7 +1133,7 @@ var KeyBoard = class {
 // src/main/web.ts
 var keyboard = new KeyBoard();
 var display = new WebDisplay(keyboard);
-var cpu = new CPU(display, keyboard);
+var cpu = new Cpu(display, keyboard);
 var runnning = false;
 var sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 document.getElementById("roms").addEventListener("change", async (event) => {
@@ -1155,7 +1155,7 @@ document.getElementById("roms").addEventListener("change", async (event) => {
   await sleep(100);
   keyboard = new KeyBoard();
   display = new WebDisplay(keyboard);
-  cpu = new CPU(display, keyboard);
+  cpu = new Cpu(display, keyboard);
   cpu.readRom(romBuffer);
   runnning = true;
   loop();
