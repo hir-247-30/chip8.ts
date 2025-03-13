@@ -567,7 +567,7 @@ var import_pino = __toESM(require_browser(), 1);
 // src/common.ts
 var DISPLAY_WIDTH = 64;
 var DISPLAY_HEIGHT = 32;
-var FOREGROUND_COLOR = "#006400";
+var FOREGROUND_COLOR = "#32CD32";
 var BACKGROUND_COLOR = "black";
 function u8(value) {
   return new Uint8Array([value])[0];
@@ -1067,7 +1067,7 @@ var WebDisplay = class extends Display {
   }
   setDisplayPixel(args) {
     const { currY, currX, value } = args;
-    return this.#displayBuffer[currY][currX] = value;
+    this.#displayBuffer[currY][currX] = value;
   }
   initDisplay() {
     const displayBuffer = [];
@@ -1134,7 +1134,7 @@ var KeyBoard = class {
 var keyboard = new KeyBoard();
 var display = new WebDisplay(keyboard);
 var cpu = new Cpu(display, keyboard);
-var runnning = false;
+var halt = false;
 var sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 document.getElementById("roms").addEventListener("change", async (event) => {
   const target = event.currentTarget;
@@ -1142,30 +1142,28 @@ document.getElementById("roms").addEventListener("change", async (event) => {
   let romBuffer;
   try {
     const response = await fetch(rom);
-    if (!response.ok) {
-      throw new Error();
-    }
+    if (!response.ok) throw new Error();
     const arrayBuffer = await response.arrayBuffer();
     romBuffer = new Uint8Array(arrayBuffer);
   } catch {
     console.log("rom\u304C\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F");
     return false;
   }
-  runnning = false;
+  halt = true;
   await sleep(100);
   keyboard = new KeyBoard();
   display = new WebDisplay(keyboard);
   cpu = new Cpu(display, keyboard);
   cpu.readRom(romBuffer);
-  runnning = true;
+  halt = false;
   loop();
 });
 document.getElementById("pause").addEventListener("click", () => {
-  runnning = !runnning;
+  halt = !halt;
   loop();
 });
 function loop() {
-  if (!runnning) return;
+  if (halt) return;
   cpu.update();
   cpu.decrementTimers();
   setTimeout(loop, 5);
