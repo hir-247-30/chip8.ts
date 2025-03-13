@@ -46,21 +46,21 @@ export class CliDisplay extends Display {
         }, 300);
     }
 
-    getDisplay () {
+    getDisplay (): number[][] {
         return this.#displayBuffer;
     }
 
-    getDisplayPixel (args: { currY: number, currX: number }) {
+    getDisplayPixel (args: { currY: number, currX: number }): 0|1 {
         const { currY, currX } = args;
         return this.#displayBuffer[currY][currX] as 0|1;
     }
 
-    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }) {
+    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }): void {
         const { currY, currX, value } = args;
-        return this.#displayBuffer[currY][currX] = value;
+        this.#displayBuffer[currY][currX] = value;
     }
 
-    initDisplay () {
+    initDisplay (): number[][] {
         const displayBuffer: number[][] = [];
         for (let i = 0; i < DISPLAY_HEIGHT; i++) {
             displayBuffer[i] = [];
@@ -71,7 +71,7 @@ export class CliDisplay extends Display {
         return displayBuffer;
     }
 
-    renderDisplay () {
+    renderDisplay (): void {
         // バッファの内容をディスプレイで表現
         const render = this.#displayBuffer.map(row =>
             row.map(pxl => (pxl ? '█' : ' ')).join('')
@@ -81,7 +81,7 @@ export class CliDisplay extends Display {
         this.screen.render();
     }
 
-    clearDisplay () {
+    clearDisplay (): void {
         this.#displayBuffer = this.initDisplay();
         this.renderDisplay();
     }

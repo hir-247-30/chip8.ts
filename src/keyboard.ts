@@ -7,15 +7,15 @@ export class KeyBoard {
         ['z', 0xA], ['x', 0x0], ['c', 0xB], ['v', 0xF],
     ]);
 
-    initKey () {
+    initKey (): void {
         this.#keyInput = null;
     }
 
-    getKey () {
+    getKey (): number|null {
         return this.#keyInput;
     }
 
-    setKey (keyName: string) {
+    setKey (keyName: string): void {
         if (!this.#keyboardMapper.has(keyName)) return;
         this.#keyInput = this.#keyboardMapper.get(keyName) ?? null;
     }

@@ -27,21 +27,21 @@ export class WebDisplay extends Display {
         });
     }
 
-    getDisplay () {
+    getDisplay (): number[][] {
         return this.#displayBuffer;
     }
 
-    getDisplayPixel (args: { currY: number, currX: number }) {
+    getDisplayPixel (args: { currY: number, currX: number }): 0|1 {
         const { currY, currX } = args;
         return this.#displayBuffer[currY][currX] as 0|1;
     }
 
-    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }) {
+    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }): void {
         const { currY, currX, value } = args;
-        return this.#displayBuffer[currY][currX] = value;
+        this.#displayBuffer[currY][currX] = value;
     }
 
-    initDisplay () {
+    initDisplay (): number[][] {
         const displayBuffer: number[][] = [];
         for (let i = 0; i < DISPLAY_HEIGHT; i++) {
             displayBuffer[i] = [];
@@ -52,7 +52,7 @@ export class WebDisplay extends Display {
         return displayBuffer;
     }
 
-    renderDisplay () {
+    renderDisplay (): void {
         for (let y = 0; y < DISPLAY_HEIGHT; y++) {
             for (let x = 0; x < DISPLAY_WIDTH; x++) {
                 if (this.#displayBuffer[y][x]) {
@@ -65,7 +65,7 @@ export class WebDisplay extends Display {
         }
     }
 
-    clearDisplay () {
+    clearDisplay (): void {
         this.#displayBuffer = this.initDisplay();
         this.renderDisplay();
     }

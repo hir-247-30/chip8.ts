@@ -69,7 +69,7 @@ export class Cpu {
     }
 
     // ROMを読み込む
-    readRom (romBuffer: Buffer<ArrayBufferLike>) {
+    readRom (romBuffer: Buffer<ArrayBufferLike>): void {
         // 511バイトまでフォントセットを埋める
         for (let i = 0; i < this.#fontset.length; i++) {
             this.memory[i] = this.#fontset[i];
@@ -80,13 +80,13 @@ export class Cpu {
         }
     }
 
-    decrementTimers () {
+    decrementTimers (): void {
         if (this.delayTimer > 0) this.delayTimer--;
         if (this.soundTimer > 0) this.soundTimer--;
     }
 
     // 命令コード実行
-    update () {
+    update (): void {
         this.display.renderDisplay();
 
         const opcode = this._readOpCode();
@@ -136,7 +136,7 @@ export class Cpu {
         }
     }
 
-    _handle0 (args: { opcode: number, hexOrder: string}) {
+    _handle0 (args: { opcode: number, hexOrder: string}): void {
         const { opcode, hexOrder } = args;
         switch (opcode & 0x00FF) {
             case 0x00E0: return this._cls();
@@ -145,7 +145,7 @@ export class Cpu {
         };
     }
 
-    _handle8 (args: { x: number, y: number, opcode: number, hexOrder: string}) {
+    _handle8 (args: { x: number, y: number, opcode: number, hexOrder: string}): void {
         const { x, y, opcode, hexOrder } = args;
         switch (opcode & 0x000F) {
             case 0x0000: return this._ldVxVy({ x, y });
@@ -161,7 +161,7 @@ export class Cpu {
         };
     }
 
-    _handleE (args: { x: number, opcode: number, hexOrder: string}) {
+    _handleE (args: { x: number, opcode: number, hexOrder: string}): void {
         const { x, opcode, hexOrder } = args;
         switch (opcode & 0x00FF) {
             case 0x009E: return this._skpVx(x);
@@ -170,7 +170,7 @@ export class Cpu {
         };
     }
 
-    _handleF (args: { x: number, opcode: number, hexOrder: string}) {
+    _handleF (args: { x: number, opcode: number, hexOrder: string}): void {
         const { x, opcode, hexOrder } = args;
         switch (opcode & 0x00FF) {
             case 0x0007: return this._ldVxDt(x);
@@ -187,7 +187,7 @@ export class Cpu {
     }
 
     // プログラムカウンタから2バイト読む
-    _readOpCode () {
+    _readOpCode (): number {
         const ahead = this.memory[this.programCounter];
         const back  = this.memory[this.programCounter + 1];
 
@@ -199,118 +199,118 @@ export class Cpu {
         return ahead << 8 | back;
     }
 
-    _cls () {
+    _cls (): void {
         this.display.clearDisplay();
     }
 
-    _ret () {
+    _ret (): void {
         this.programCounter = u16(this.stack[this.stackPointer]);
         this.stackPointer--;
     }
 
-    _jpAddr (nnn: number) {
+    _jpAddr (nnn: number): void {
         this.programCounter = u16(nnn);
     }
 
-    _callAddr (nnn: number) {
+    _callAddr (nnn: number): void {
         this.stackPointer++;
         this.stack[this.stackPointer] = this.programCounter;
         this.programCounter = u16(nnn);
     }
 
-    _seVxByte (args: { x: number, kk: number }) {
+    _seVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
         if (this.registerV[x] === kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _sneVxByte (args: { x: number, kk: number }) {
+    _sneVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
         if (this.registerV[x] !== kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _seVxVy (args: { x: number, y: number }) {
+    _seVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         if (this.registerV[x] === this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _ldVxByte (args: { x: number, kk: number }) {
+    _ldVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
         this.registerV[x] = kk;
     }
 
-    _addVxByte (args: { x: number, kk: number }) {
+    _addVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
         this.registerV[x] += kk;
     }
     
-    _ldVxVy (args: { x: number, y: number }) {
+    _ldVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[x] = this.registerV[y];
     }
 
-    _orVxVy (args: { x: number, y: number }) {
+    _orVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[x] |= this.registerV[y];
     }
 
-    _andVxVy (args: { x: number, y: number }) {
+    _andVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[x] &= this.registerV[y];
     }
 
-    _xorVxVy (args: { x: number, y: number }) {
+    _xorVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[x] ^= this.registerV[y];
     }
 
-    _addVxVy (args: { x: number, y: number }) {
+    _addVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[0xF] = (this.registerV[x] + this.registerV[y] > 0xFF) ? 1 : 0;
         this.registerV[x] += this.registerV[y];
     }
 
-    _subVxVy (args: { x: number, y: number }) {
+    _subVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[0xF] = (this.registerV[x] > this.registerV[y]) ? 1 : 0;
         this.registerV[x] -= this.registerV[y];
     }
 
-    _shrVx (x: number) {
+    _shrVx (x: number): void {
         this.registerV[0xF] = (this.registerV[x] & 0x1) ? 1 : 0;
         this.registerV[x] >>= 1;
     }
 
-    _subnVxVy (args: { x: number, y: number }) {
+    _subnVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         this.registerV[0xF] = (this.registerV[y] > this.registerV[x]) ? 1 : 0;
         this.registerV[x] = this.registerV[y] - this.registerV[x];
     }
 
-    _shlVx (x: number) {
+    _shlVx (x: number): void {
         this.registerV[0xF] = (this.registerV[x] & 0x80) ? 1 : 0;
         this.registerV[x] <<= 1;
     }
 
-    _sneVxVy (args: { x: number, y: number }) {
+    _sneVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
         if (this.registerV[x] !== this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _ldIAddr (nnn: number) {
+    _ldIAddr (nnn: number): void {
         this.indexRegisterI = u16(nnn);
     }
 
-    _jpV0Addr (nnn: number) {
+    _jpV0Addr (nnn: number): void {
         this.programCounter = u16(nnn + this.registerV[0]);
     }
 
-    _rndVxByte (args: { x: number, kk: number }) {
+    _rndVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
         this.registerV[x] = Math.floor(Math.random() * 0xFF) & kk;
     }
 
     // dもnも一緒に扱ってOK
-    _drwVxVyNibble (args: { x: number, y: number , n: number}) {
+    _drwVxVyNibble (args: { x: number, y: number , n: number}): void {
         const { x, y, n } = args;
         this.registerV[0xf] = 0;
 
@@ -334,19 +334,19 @@ export class Cpu {
         }
     }
 
-    _skpVx (x: number) {
+    _skpVx (x: number): void {
         if (this.keyboard.getKey() === this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _sknpVx (x: number) {
+    _sknpVx (x: number): void {
         if (this.keyboard.getKey() !== this.registerV[x]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _ldVxDt (x: number) {
+    _ldVxDt (x: number): void {
         this.registerV[x] = this.delayTimer;
     }
 
-    _ldVxK (x: number) {
+    _ldVxK (x: number): void {
         // キーが押下されている
         const key = this.keyboard.getKey();
         if (key !== null) {
@@ -358,23 +358,23 @@ export class Cpu {
         }
     }
 
-    _ldDtVx (x: number) {
+    _ldDtVx (x: number): void {
         this.delayTimer = u8(this.registerV[x]);
     }
 
-    _ldStVx (x: number) {
+    _ldStVx (x: number): void {
         this.soundTimer = u8(this.registerV[x]);
     }
 
-    _addIVx (x: number) {
+    _addIVx (x: number): void {
         this.indexRegisterI = u16(this.indexRegisterI + this.registerV[x]);
     }
 
-    _ldFVx (x: number) {
+    _ldFVx (x: number): void {
         this.indexRegisterI = u16(this.registerV[x] * 0x5);
     }
 
-    _ldBVx (x: number) {
+    _ldBVx (x: number): void {
         let v = this.registerV[x];
         const B = Math.floor(v / 100);
 
@@ -389,19 +389,19 @@ export class Cpu {
         this.memory[this.indexRegisterI + 2] = D;
     }
 
-    _ldIVx (x: number) {
+    _ldIVx (x: number): void {
         for (let i = 0; i <= x; i++) {
             this.memory[this.indexRegisterI + i] = this.registerV[i];
         }
     }
 
-    _ldVxI (x: number) {
+    _ldVxI (x: number): void {
         for (let i = 0; i <= x; i++) {
             this.registerV[i] = this.memory[this.indexRegisterI + i];
         }
     }
 
-    #debugDump (hexOrder: string) {
+    #debugDump (hexOrder: string): void {
         if (!this.#debug) return;
         if (!this.#logger) return;
 

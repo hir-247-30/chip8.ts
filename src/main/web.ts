@@ -5,7 +5,7 @@ import { KeyBoard } from '../keyboard';
 let keyboard = new KeyBoard();
 let display  = new WebDisplay(keyboard);
 let cpu      = new Cpu(display, keyboard);
-let runnning = false;
+let halt     = false;
 
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
 
@@ -16,40 +16,35 @@ document.getElementById('roms')!.addEventListener('change', async (event) => {
     let romBuffer: Buffer<ArrayBufferLike>;
     try {
         const response = await fetch(rom);
-        // エラー時にcatchしてくれないブラウザがある
-        if (!response.ok) {
-            throw new Error();
-        }
+        if (!response.ok) throw new Error(); // エラー時にcatchしてくれないブラウザがある
 
         const arrayBuffer = await response.arrayBuffer();
-        // Bufferはブラウザだと使えない
-        romBuffer =  new Uint8Array(arrayBuffer) as Buffer<ArrayBufferLike>;
+        romBuffer =  new Uint8Array(arrayBuffer) as Buffer<ArrayBufferLike>; // Bufferはブラウザだと使えない
     } catch {
         console.log('romが読み込めませんでした');
         return false;
     }
 
-    runnning = false;
+    halt = true;
 
-    // 前のromのloopを終わらせるため一瞬止める
-    await sleep(100);
+    await sleep(100); // 前のromのloopを終わらせるため一瞬止める
     
     keyboard = new KeyBoard();
     display  = new WebDisplay(keyboard);
     cpu      = new Cpu(display, keyboard);
     cpu.readRom(romBuffer);
 
-    runnning = true;
+    halt = false;
     loop();
 });
 
 document.getElementById('pause')!.addEventListener('click', () => {
-    runnning = !runnning;
+    halt = !halt;
     loop();
 });
 
-function loop () {
-    if (!runnning) return;
+function loop (): void {
+    if (halt) return;
 
     cpu.update();
     cpu.decrementTimers();

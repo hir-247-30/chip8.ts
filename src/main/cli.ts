@@ -19,7 +19,7 @@ const display = new CliDisplay(keyboard);
 const cpu = new Cpu(display, keyboard);
 cpu.readRom(romBuffer);
 
-function loop () {
+function loop (): void {
     cpu.update();
     cpu.decrementTimers();
     setTimeout(loop, 5);
