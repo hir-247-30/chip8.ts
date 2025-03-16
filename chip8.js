@@ -575,6 +575,10 @@ function u8(value) {
 function u16(value) {
   return new Uint16Array([value])[0];
 }
+function notUndefined(value) {
+  if (value === void 0) throw new Error("undefined value");
+  return value;
+}
 
 // src/cpu.ts
 var Cpu = class {
@@ -718,10 +722,10 @@ var Cpu = class {
   // ROMを読み込む
   readRom(romBuffer) {
     for (let i = 0; i < this.#fontset.length; i++) {
-      this.memory[i] = this.#fontset[i];
+      this.memory[i] = notUndefined(this.#fontset[i]);
     }
     for (let i = 0; i < romBuffer.length; i++) {
-      this.memory[512 + i] = romBuffer[i];
+      this.memory[512 + i] = notUndefined(romBuffer[i]);
     }
   }
   decrementTimers() {
@@ -856,15 +860,15 @@ var Cpu = class {
   }
   // プログラムカウンタから2バイト読む
   _readOpCode() {
-    const ahead = this.memory[this.programCounter];
-    const back = this.memory[this.programCounter + 1];
+    const ahead = notUndefined(this.memory[this.programCounter]);
+    const back = notUndefined(this.memory[this.programCounter + 1]);
     return ahead << 8 | back;
   }
   _cls() {
     this.display.clearDisplay();
   }
   _ret() {
-    this.programCounter = u16(this.stack[this.stackPointer]);
+    this.programCounter = u16(notUndefined(this.stack[this.stackPointer]));
     this.stackPointer--;
   }
   _jpAddr(nnn) {
@@ -893,44 +897,53 @@ var Cpu = class {
   }
   _addVxByte(args) {
     const { x, kk } = args;
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
     this.registerV[x] += kk;
   }
   _ldVxVy(args) {
     const { x, y } = args;
-    this.registerV[x] = this.registerV[y];
+    this.registerV[x] = notUndefined(this.registerV[y]);
   }
   _orVxVy(args) {
     const { x, y } = args;
-    this.registerV[x] |= this.registerV[y];
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
+    this.registerV[x] |= notUndefined(this.registerV[y]);
   }
   _andVxVy(args) {
     const { x, y } = args;
-    this.registerV[x] &= this.registerV[y];
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
+    this.registerV[x] &= notUndefined(this.registerV[y]);
   }
   _xorVxVy(args) {
     const { x, y } = args;
-    this.registerV[x] ^= this.registerV[y];
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
+    this.registerV[x] ^= notUndefined(this.registerV[y]);
   }
   _addVxVy(args) {
     const { x, y } = args;
+    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
     this.registerV[15] = this.registerV[x] + this.registerV[y] > 255 ? 1 : 0;
     this.registerV[x] += this.registerV[y];
   }
   _subVxVy(args) {
     const { x, y } = args;
+    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
     this.registerV[15] = this.registerV[x] > this.registerV[y] ? 1 : 0;
     this.registerV[x] -= this.registerV[y];
   }
   _shrVx(x) {
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
     this.registerV[15] = this.registerV[x] & 1 ? 1 : 0;
     this.registerV[x] >>= 1;
   }
   _subnVxVy(args) {
     const { x, y } = args;
+    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
     this.registerV[15] = this.registerV[y] > this.registerV[x] ? 1 : 0;
     this.registerV[x] = this.registerV[y] - this.registerV[x];
   }
   _shlVx(x) {
+    if (this.registerV[x] === void 0) throw new Error("invalid register access");
     this.registerV[15] = this.registerV[x] & 128 ? 1 : 0;
     this.registerV[x] <<= 1;
   }
@@ -942,7 +955,7 @@ var Cpu = class {
     this.indexRegisterI = u16(nnn);
   }
   _jpV0Addr(nnn) {
-    this.programCounter = u16(nnn + this.registerV[0]);
+    this.programCounter = u16(nnn + notUndefined(this.registerV[0]));
   }
   _rndVxByte(args) {
     const { x, kk } = args;
@@ -955,9 +968,9 @@ var Cpu = class {
     for (let byteOffset = 0; byteOffset < n; byteOffset++) {
       const byte = this.memory[this.indexRegisterI + byteOffset];
       for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
-        if ((byte & 128 >> bitOffset) === 0) continue;
-        const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
-        const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
+        if ((notUndefined(byte) & 128 >> bitOffset) === 0) continue;
+        const currX = (notUndefined(this.registerV[x]) + bitOffset) % DISPLAY_WIDTH;
+        const currY = (notUndefined(this.registerV[y]) + byteOffset) % DISPLAY_HEIGHT;
         const pixel = this.display.getDisplayPixel({ currY, currX });
         const xor = pixel ^ 1;
         this.display.setDisplayPixel({ currY, currX, value: xor });
@@ -984,19 +997,19 @@ var Cpu = class {
     }
   }
   _ldDtVx(x) {
-    this.delayTimer = u8(this.registerV[x]);
+    this.delayTimer = u8(notUndefined(this.registerV[x]));
   }
   _ldStVx(x) {
-    this.soundTimer = u8(this.registerV[x]);
+    this.soundTimer = u8(notUndefined(this.registerV[x]));
   }
   _addIVx(x) {
-    this.indexRegisterI = u16(this.indexRegisterI + this.registerV[x]);
+    this.indexRegisterI = u16(this.indexRegisterI + notUndefined(this.registerV[x]));
   }
   _ldFVx(x) {
-    this.indexRegisterI = u16(this.registerV[x] * 5);
+    this.indexRegisterI = u16(notUndefined(this.registerV[x]) * 5);
   }
   _ldBVx(x) {
-    let v = this.registerV[x];
+    let v = notUndefined(this.registerV[x]);
     const B = Math.floor(v / 100);
     v = v - B * 100;
     const C = Math.floor(v / 10);
@@ -1008,12 +1021,12 @@ var Cpu = class {
   }
   _ldIVx(x) {
     for (let i = 0; i <= x; i++) {
-      this.memory[this.indexRegisterI + i] = this.registerV[i];
+      this.memory[this.indexRegisterI + i] = notUndefined(this.registerV[i]);
     }
   }
   _ldVxI(x) {
     for (let i = 0; i <= x; i++) {
-      this.registerV[i] = this.memory[this.indexRegisterI + i];
+      this.registerV[i] = notUndefined(this.memory[this.indexRegisterI + i]);
     }
   }
   #debugDump(hexOrder) {
@@ -1063,10 +1076,11 @@ var WebDisplay = class extends Display {
   }
   getDisplayPixel(args) {
     const { currY, currX } = args;
-    return this.#displayBuffer[currY][currX];
+    return notUndefined(this.#displayBuffer[currY]?.[currX]);
   }
   setDisplayPixel(args) {
     const { currY, currX, value } = args;
+    if (this.#displayBuffer[currY] === void 0 || this.#displayBuffer[currY][currX] === void 0) throw new Error("invalid buffer access");
     this.#displayBuffer[currY][currX] = value;
   }
   initDisplay() {
@@ -1074,7 +1088,7 @@ var WebDisplay = class extends Display {
     for (let i = 0; i < DISPLAY_HEIGHT; i++) {
       displayBuffer[i] = [];
       for (let j = 0; j < DISPLAY_WIDTH; j++) {
-        displayBuffer[i].push(0);
+        notUndefined(displayBuffer[i]).push(0);
       }
     }
     return displayBuffer;
@@ -1082,7 +1096,7 @@ var WebDisplay = class extends Display {
   renderDisplay() {
     for (let y = 0; y < DISPLAY_HEIGHT; y++) {
       for (let x = 0; x < DISPLAY_WIDTH; x++) {
-        if (this.#displayBuffer[y][x]) {
+        if (this.#displayBuffer[y]?.[x]) {
           this.#ctx.fillStyle = FOREGROUND_COLOR;
         } else {
           this.#ctx.fillStyle = BACKGROUND_COLOR;
@@ -1147,7 +1161,7 @@ document.getElementById("roms").addEventListener("change", async (event) => {
     romBuffer = new Uint8Array(arrayBuffer);
   } catch {
     console.log("rom\u304C\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F");
-    return false;
+    return;
   }
   halt = true;
   await sleep(100);
