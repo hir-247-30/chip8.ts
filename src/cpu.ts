@@ -1,7 +1,7 @@
 import pino from 'pino';
 import { Display } from './display/abstractDisplay';
 import { KeyBoard } from './keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16 } from './common';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, notUndefined } from './common';
 
 export class Cpu {
     // レジスタ定義
@@ -72,11 +72,11 @@ export class Cpu {
     readRom (romBuffer: Buffer<ArrayBufferLike>): void {
         // 511バイトまでフォントセットを埋める
         for (let i = 0; i < this.#fontset.length; i++) {
-            this.memory[i] = this.#fontset[i];
+            this.memory[i] = notUndefined(this.#fontset[i]);
         }
         // 512バイトからROMを読み込ませる
         for (let i = 0; i < romBuffer.length; i++) {
-            this.memory[0x200 + i] = romBuffer[i];
+            this.memory[0x200 + i] = notUndefined(romBuffer[i]);
         }
     }
 
@@ -188,8 +188,8 @@ export class Cpu {
 
     // プログラムカウンタから2バイト読む
     _readOpCode (): number {
-        const ahead = this.memory[this.programCounter];
-        const back  = this.memory[this.programCounter + 1];
+        const ahead = notUndefined(this.memory[this.programCounter]);
+        const back  = notUndefined(this.memory[this.programCounter + 1]);
 
         // ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
         // XXYYで例える
@@ -204,7 +204,7 @@ export class Cpu {
     }
 
     _ret (): void {
-        this.programCounter = u16(this.stack[this.stackPointer]);
+        this.programCounter = u16(notUndefined(this.stack[this.stackPointer]));
         this.stackPointer--;
     }
 
@@ -240,53 +240,78 @@ export class Cpu {
 
     _addVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
+
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
         this.registerV[x] += kk;
     }
     
     _ldVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] = this.registerV[y];
+        this.registerV[x] = notUndefined(this.registerV[y]);
     }
 
     _orVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] |= this.registerV[y];
+
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
+        this.registerV[x] |= notUndefined(this.registerV[y]);
     }
 
     _andVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] &= this.registerV[y];
+
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
+        this.registerV[x] &= notUndefined(this.registerV[y]);
     }
 
     _xorVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] ^= this.registerV[y];
+
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
+        this.registerV[x] ^= notUndefined(this.registerV[y]);
     }
 
     _addVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
+
+        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
+
         this.registerV[0xF] = (this.registerV[x] + this.registerV[y] > 0xFF) ? 1 : 0;
         this.registerV[x] += this.registerV[y];
     }
 
     _subVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
+
+        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
+
         this.registerV[0xF] = (this.registerV[x] > this.registerV[y]) ? 1 : 0;
         this.registerV[x] -= this.registerV[y];
     }
 
     _shrVx (x: number): void {
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
         this.registerV[0xF] = (this.registerV[x] & 0x1) ? 1 : 0;
         this.registerV[x] >>= 1;
     }
 
     _subnVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
+
+        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
+
         this.registerV[0xF] = (this.registerV[y] > this.registerV[x]) ? 1 : 0;
         this.registerV[x] = this.registerV[y] - this.registerV[x];
     }
 
     _shlVx (x: number): void {
+        if (this.registerV[x] === undefined) throw new Error('invalid register access');
+
         this.registerV[0xF] = (this.registerV[x] & 0x80) ? 1 : 0;
         this.registerV[x] <<= 1;
     }
@@ -301,7 +326,7 @@ export class Cpu {
     }
 
     _jpV0Addr (nnn: number): void {
-        this.programCounter = u16(nnn + this.registerV[0]);
+        this.programCounter = u16(nnn + notUndefined(this.registerV[0]));
     }
 
     _rndVxByte (args: { x: number, kk: number }): void {
@@ -317,10 +342,10 @@ export class Cpu {
         for (let byteOffset = 0; byteOffset < n; byteOffset++) {
             const byte = this.memory[this.indexRegisterI + byteOffset];
             for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
-                if ((byte & (0x80 >> bitOffset)) === 0) continue;
+                if ((notUndefined(byte) & (0x80 >> bitOffset)) === 0) continue;
 
-                const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
-                const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
+                const currX = (notUndefined(this.registerV[x]) + bitOffset) % DISPLAY_WIDTH;
+                const currY = (notUndefined(this.registerV[y]) + byteOffset) % DISPLAY_HEIGHT;
 
                 const pixel = this.display.getDisplayPixel({ currY, currX });
                 const xor = (pixel ^ 1) as 0|1;
@@ -359,23 +384,23 @@ export class Cpu {
     }
 
     _ldDtVx (x: number): void {
-        this.delayTimer = u8(this.registerV[x]);
+        this.delayTimer = u8(notUndefined(this.registerV[x]));
     }
 
     _ldStVx (x: number): void {
-        this.soundTimer = u8(this.registerV[x]);
+        this.soundTimer = u8(notUndefined(this.registerV[x]));
     }
 
     _addIVx (x: number): void {
-        this.indexRegisterI = u16(this.indexRegisterI + this.registerV[x]);
+        this.indexRegisterI = u16(this.indexRegisterI + notUndefined(this.registerV[x]));
     }
 
     _ldFVx (x: number): void {
-        this.indexRegisterI = u16(this.registerV[x] * 0x5);
+        this.indexRegisterI = u16(notUndefined(this.registerV[x]) * 0x5);
     }
 
     _ldBVx (x: number): void {
-        let v = this.registerV[x];
+        let v = notUndefined(this.registerV[x]);
         const B = Math.floor(v / 100);
 
         v = v - B * 100;
@@ -391,16 +416,16 @@ export class Cpu {
 
     _ldIVx (x: number): void {
         for (let i = 0; i <= x; i++) {
-            this.memory[this.indexRegisterI + i] = this.registerV[i];
+            this.memory[this.indexRegisterI + i] = notUndefined(this.registerV[i]);
         }
     }
 
     _ldVxI (x: number): void {
         for (let i = 0; i <= x; i++) {
-            this.registerV[i] = this.memory[this.indexRegisterI + i];
+            this.registerV[i] = notUndefined(this.memory[this.indexRegisterI + i]);
         }
     }
-
+ 
     #debugDump (hexOrder: string): void {
         if (!this.#debug) return;
         if (!this.#logger) return;

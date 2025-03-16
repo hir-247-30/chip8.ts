@@ -14,3 +14,8 @@ export function u8 (value: number): u8 {
 export function u16 (value: number): u16 {
     return new Uint16Array([value])[0] as u16;
 }
+
+export function notUndefined <T> (value: T | undefined): T {
+    if (value === undefined) throw new Error('undefined value');
+    return value;
+}

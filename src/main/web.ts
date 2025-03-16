@@ -9,7 +9,7 @@ let halt     = false;
 
 const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time));
 
-document.getElementById('roms')!.addEventListener('change', async (event) => {
+document.getElementById('roms')!.addEventListener('change', async (event): Promise<void> => {
     const target = event.currentTarget as HTMLInputElement; // EventTarget だと解釈される
     const rom = target.value;
 
@@ -22,7 +22,7 @@ document.getElementById('roms')!.addEventListener('change', async (event) => {
         romBuffer =  new Uint8Array(arrayBuffer) as Buffer<ArrayBufferLike>; // Bufferはブラウザだと使えない
     } catch {
         console.log('romが読み込めませんでした');
-        return false;
+        return;
     }
 
     halt = true;
