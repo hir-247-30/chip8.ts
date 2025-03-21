@@ -240,10 +240,7 @@ export class Cpu {
 
     _addVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
-
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[x] += kk;
+        this.registerV[x] = notUndefined(this.registerV[x]) + kk;
     }
     
     _ldVxVy (args: { x: number, y: number }): void {
@@ -253,67 +250,48 @@ export class Cpu {
 
     _orVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[x] |= notUndefined(this.registerV[y]);
+        this.registerV[x] = notUndefined(this.registerV[x]) | notUndefined(this.registerV[y]);
     }
 
     _andVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[x] &= notUndefined(this.registerV[y]);
+        this.registerV[x] = notUndefined(this.registerV[x]) & notUndefined(this.registerV[y]);
     }
 
     _xorVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[x] ^= notUndefined(this.registerV[y]);
+        this.registerV[x] = notUndefined(this.registerV[x]) ^ notUndefined(this.registerV[y]);
     }
 
     _addVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
-
-        this.registerV[0xF] = (this.registerV[x] + this.registerV[y] > 0xFF) ? 1 : 0;
-        this.registerV[x] += this.registerV[y];
+        this.registerV[0xF] = (notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]) > 0xFF) ? 1 : 0;
+        this.registerV[x] = notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]);
     }
 
     _subVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
-
-        this.registerV[0xF] = (this.registerV[x] > this.registerV[y]) ? 1 : 0;
-        this.registerV[x] -= this.registerV[y];
+        this.registerV[0xF] = (notUndefined(this.registerV[x]) > notUndefined(this.registerV[y])) ? 1 : 0;
+        this.registerV[x] = notUndefined(this.registerV[x]) - notUndefined(this.registerV[y]);
     }
 
     _shrVx (x: number): void {
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[0xF] = (this.registerV[x] & 0x1) ? 1 : 0;
-        this.registerV[x] >>= 1;
+        this.registerV[0xF] = (notUndefined(this.registerV[x]) & 0x1) ? 1 : 0;
+        this.registerV[x] = notUndefined(this.registerV[x]) >> 1;
     }
 
     _subnVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        if (this.registerV[x] === undefined || this.registerV[y] === undefined) throw new Error('invalid register access');
-
-        this.registerV[0xF] = (this.registerV[y] > this.registerV[x]) ? 1 : 0;
-        this.registerV[x] = this.registerV[y] - this.registerV[x];
+        this.registerV[0xF] = (notUndefined(this.registerV[y]) > notUndefined(this.registerV[x])) ? 1 : 0;
+        this.registerV[x] = notUndefined(this.registerV[y]) - notUndefined(this.registerV[x]);
     }
 
     _shlVx (x: number): void {
-        if (this.registerV[x] === undefined) throw new Error('invalid register access');
-
-        this.registerV[0xF] = (this.registerV[x] & 0x80) ? 1 : 0;
-        this.registerV[x] <<= 1;
+        this.registerV[0xF] = (notUndefined(this.registerV[x]) & 0x80) ? 1 : 0;
+        this.registerV[x] = notUndefined(this.registerV[x]) << 1;
     }
 
     _sneVxVy (args: { x: number, y: number }): void {
