@@ -35,6 +35,8 @@ document.getElementById('roms')!.addEventListener('change', async (event): Promi
     cpu.readRom(romBuffer);
 
     halt = false;
+
+    changeInstruction(rom);
     loop();
 });
 
@@ -49,4 +51,15 @@ function loop (): void {
     cpu.update();
     cpu.decrementTimers();
     setTimeout(loop, 5);
+}
+
+function changeInstruction (rom: string): void {
+    const instructionMap: Map<string, string> = new Map([
+        ['BRIX', 'Qで左移動、Eで右移動'],
+        ['TETRIS', 'Qで回転、Wで左移動、Eで右移動、Aホールドで速く落下'],
+        ['INVADERS', 'Wで開始、Wで球発射、Qで左移動、Eで右移動'],
+        ['LANDING', 'Sで落下'],
+    ]);
+
+    document.getElementById('instruction')!.textContent = instructionMap.get(rom) || '';
 }

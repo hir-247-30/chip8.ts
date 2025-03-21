@@ -85,6 +85,15 @@
             background: black;
             image-rendering: pixelated;
         }
+
+        .instruction {
+            margin-top: 15px;
+            color: #ccc;
+            font-size: 14px;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +116,7 @@
             </button>
         </div>
         <canvas id="screen" width="640" height="320"></canvas>
+        <div class="instruction" id="instruction"></div>
     </div>
 
     <script src="chip8.js" type="module"></script>
