@@ -897,8 +897,7 @@ var Cpu = class {
   }
   _addVxByte(args) {
     const { x, kk } = args;
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[x] += kk;
+    this.registerV[x] = notUndefined(this.registerV[x]) + kk;
   }
   _ldVxVy(args) {
     const { x, y } = args;
@@ -906,46 +905,38 @@ var Cpu = class {
   }
   _orVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[x] |= notUndefined(this.registerV[y]);
+    this.registerV[x] = notUndefined(this.registerV[x]) | notUndefined(this.registerV[y]);
   }
   _andVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[x] &= notUndefined(this.registerV[y]);
+    this.registerV[x] = notUndefined(this.registerV[x]) & notUndefined(this.registerV[y]);
   }
   _xorVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[x] ^= notUndefined(this.registerV[y]);
+    this.registerV[x] = notUndefined(this.registerV[x]) ^ notUndefined(this.registerV[y]);
   }
   _addVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
-    this.registerV[15] = this.registerV[x] + this.registerV[y] > 255 ? 1 : 0;
-    this.registerV[x] += this.registerV[y];
+    this.registerV[15] = notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]) > 255 ? 1 : 0;
+    this.registerV[x] = notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]);
   }
   _subVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
-    this.registerV[15] = this.registerV[x] > this.registerV[y] ? 1 : 0;
-    this.registerV[x] -= this.registerV[y];
+    this.registerV[15] = notUndefined(this.registerV[x]) > notUndefined(this.registerV[y]) ? 1 : 0;
+    this.registerV[x] = notUndefined(this.registerV[x]) - notUndefined(this.registerV[y]);
   }
   _shrVx(x) {
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[15] = this.registerV[x] & 1 ? 1 : 0;
-    this.registerV[x] >>= 1;
+    this.registerV[15] = notUndefined(this.registerV[x]) & 1 ? 1 : 0;
+    this.registerV[x] = notUndefined(this.registerV[x]) >> 1;
   }
   _subnVxVy(args) {
     const { x, y } = args;
-    if (this.registerV[x] === void 0 || this.registerV[y] === void 0) throw new Error("invalid register access");
-    this.registerV[15] = this.registerV[y] > this.registerV[x] ? 1 : 0;
-    this.registerV[x] = this.registerV[y] - this.registerV[x];
+    this.registerV[15] = notUndefined(this.registerV[y]) > notUndefined(this.registerV[x]) ? 1 : 0;
+    this.registerV[x] = notUndefined(this.registerV[y]) - notUndefined(this.registerV[x]);
   }
   _shlVx(x) {
-    if (this.registerV[x] === void 0) throw new Error("invalid register access");
-    this.registerV[15] = this.registerV[x] & 128 ? 1 : 0;
-    this.registerV[x] <<= 1;
+    this.registerV[15] = notUndefined(this.registerV[x]) & 128 ? 1 : 0;
+    this.registerV[x] = notUndefined(this.registerV[x]) << 1;
   }
   _sneVxVy(args) {
     const { x, y } = args;
@@ -1170,6 +1161,7 @@ document.getElementById("roms").addEventListener("change", async (event) => {
   cpu = new Cpu(display, keyboard);
   cpu.readRom(romBuffer);
   halt = false;
+  changeInstruction(rom);
   loop();
 });
 document.getElementById("pause").addEventListener("click", () => {
@@ -1181,4 +1173,13 @@ function loop() {
   cpu.update();
   cpu.decrementTimers();
   setTimeout(loop, 5);
+}
+function changeInstruction(rom) {
+  const instructionMap = /* @__PURE__ */ new Map([
+    ["BRIX", "Q\u3067\u5DE6\u79FB\u52D5\u3001E\u3067\u53F3\u79FB\u52D5"],
+    ["TETRIS", "Q\u3067\u56DE\u8EE2\u3001W\u3067\u5DE6\u79FB\u52D5\u3001E\u3067\u53F3\u79FB\u52D5\u3001A\u30DB\u30FC\u30EB\u30C9\u3067\u901F\u304F\u843D\u4E0B"],
+    ["INVADERS", "W\u3067\u958B\u59CB\u3001W\u3067\u7403\u767A\u5C04\u3001Q\u3067\u5DE6\u79FB\u52D5\u3001E\u3067\u53F3\u79FB\u52D5"],
+    ["LANDING", "S\u3067\u843D\u4E0B"]
+  ]);
+  document.getElementById("instruction").textContent = instructionMap.get(rom) || "";
 }
