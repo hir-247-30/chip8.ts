@@ -1,7 +1,7 @@
 import pino from 'pino';
 import { Display } from './display/abstractDisplay';
 import { KeyBoard } from './keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, notUndefined } from './common';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, assertUndefined } from './common';
 
 export class Cpu {
     // レジスタ定義
@@ -71,12 +71,23 @@ export class Cpu {
     // ROMを読み込む
     readRom (romBuffer: Buffer<ArrayBufferLike>): void {
         // 511バイトまでフォントセットを埋める
+        let fontset: number|undefined;
         for (let i = 0; i < this.#fontset.length; i++) {
-            this.memory[i] = notUndefined(this.#fontset[i]);
+            fontset = this.#fontset[i];
+
+            assertUndefined(fontset);
+
+            this.memory[i] = fontset;
         }
+
         // 512バイトからROMを読み込ませる
+        let romBuf: number|undefined;
         for (let i = 0; i < romBuffer.length; i++) {
-            this.memory[0x200 + i] = notUndefined(romBuffer[i]);
+            romBuf = romBuffer[i];
+
+            assertUndefined(romBuf);
+
+            this.memory[0x200 + i] = romBuf;
         }
     }
 
@@ -115,38 +126,42 @@ export class Cpu {
         const hexOrder = [c.toString(16), x.toString(16), y.toString(16), d.toString(16)].join('-');
         this.#debugDump(hexOrder);
 
-        switch (opcode & 0xF000) {
-            case 0x0000: return this._handle0({ opcode, hexOrder });
-            case 0x1000: return this._jpAddr(nnn);
-            case 0x2000: return this._callAddr(nnn);
-            case 0x3000: return this._seVxByte({ x, kk });
-            case 0x4000: return this._sneVxByte({ x, kk });
-            case 0x5000: return this._seVxVy({ x, y });
-            case 0x6000: return this._ldVxByte({ x, kk });
-            case 0x7000: return this._addVxByte({ x, kk });
-            case 0x8000: return this._handle8({ x, y, opcode, hexOrder });
-            case 0x9000: return this._sneVxVy({ x, y });
-            case 0xA000: return this._ldIAddr(nnn);
-            case 0xB000: return this._jpV0Addr(nnn);
-            case 0xC000: return this._rndVxByte({ x, kk });
-            case 0xD000: return this._drwVxVyNibble({ x, y, n: d });
-            case 0xE000: return this._handleE({ x, opcode, hexOrder });
-            case 0xF000: return this._handleF({ x, opcode, hexOrder });
-            default: throw new Error(`undefined opcode ${hexOrder}`);
+        try {
+            switch (opcode & 0xF000) {
+                case 0x0000: return this._handle0(opcode);
+                case 0x1000: return this._jpAddr(nnn);
+                case 0x2000: return this._callAddr(nnn);
+                case 0x3000: return this._seVxByte({ x, kk });
+                case 0x4000: return this._sneVxByte({ x, kk });
+                case 0x5000: return this._seVxVy({ x, y });
+                case 0x6000: return this._ldVxByte({ x, kk });
+                case 0x7000: return this._addVxByte({ x, kk });
+                case 0x8000: return this._handle8({ x, y, opcode });
+                case 0x9000: return this._sneVxVy({ x, y });
+                case 0xA000: return this._ldIAddr(nnn);
+                case 0xB000: return this._jpV0Addr(nnn);
+                case 0xC000: return this._rndVxByte({ x, kk });
+                case 0xD000: return this._drwVxVyNibble({ x, y, n: d });
+                case 0xE000: return this._handleE({ x, opcode });
+                case 0xF000: return this._handleF({ x, opcode });
+                default: throw new Error();
+            }
+        } catch (e: unknown) {
+            console.log(e);
+            throw new Error(`invalid opcode ${hexOrder}`);
         }
     }
 
-    _handle0 (args: { opcode: number, hexOrder: string}): void {
-        const { opcode, hexOrder } = args;
+    _handle0 (opcode: number): void {
         switch (opcode & 0x00FF) {
             case 0x00E0: return this._cls();
             case 0x00EE: return this._ret();
-            default: throw new Error(`undefined opcode ${hexOrder}`);
+            default: throw new Error();
         };
     }
 
-    _handle8 (args: { x: number, y: number, opcode: number, hexOrder: string}): void {
-        const { x, y, opcode, hexOrder } = args;
+    _handle8 (args: { x: number, y: number, opcode: number }): void {
+        const { x, y, opcode } = args;
         switch (opcode & 0x000F) {
             case 0x0000: return this._ldVxVy({ x, y });
             case 0x0001: return this._orVxVy({ x, y });
@@ -157,21 +172,21 @@ export class Cpu {
             case 0x0006: return this._shrVx(x);
             case 0x0007: return this._subnVxVy({ x, y });
             case 0x000E: return this._shlVx(x);
-            default: throw new Error(`undefined opcode ${hexOrder}`);
+            default: throw new Error();
         };
     }
 
-    _handleE (args: { x: number, opcode: number, hexOrder: string}): void {
-        const { x, opcode, hexOrder } = args;
+    _handleE (args: { x: number, opcode: number }): void {
+        const { x, opcode } = args;
         switch (opcode & 0x00FF) {
             case 0x009E: return this._skpVx(x);
             case 0x00A1: return this._sknpVx(x);
-            default: throw new Error(`undefined opcode ${hexOrder}`);
+            default: throw new Error();
         };
     }
 
-    _handleF (args: { x: number, opcode: number, hexOrder: string}): void {
-        const { x, opcode, hexOrder } = args;
+    _handleF (args: { x: number, opcode: number }): void {
+        const { x, opcode } = args;
         switch (opcode & 0x00FF) {
             case 0x0007: return this._ldVxDt(x);
             case 0x000A: return this._ldVxK(x);
@@ -182,14 +197,17 @@ export class Cpu {
             case 0x0033: return this._ldBVx(x);
             case 0x0055: return this._ldIVx(x);
             case 0x0065: return this._ldVxI(x);
-            default: throw new Error(`undefined opcode ${hexOrder}`);
+            default: throw new Error();
         };
     }
 
     // プログラムカウンタから2バイト読む
     _readOpCode (): number {
-        const ahead = notUndefined(this.memory[this.programCounter]);
-        const back  = notUndefined(this.memory[this.programCounter + 1]);
+        const ahead = this.memory[this.programCounter];
+        const back  = this.memory[this.programCounter + 1];
+
+        assertUndefined(ahead);
+        assertUndefined(back);
 
         // ビッグエンディアンに変換するため最初のバイトと二つ目のバイトを入れ替える
         // XXYYで例える
@@ -204,7 +222,11 @@ export class Cpu {
     }
 
     _ret (): void {
-        this.programCounter = u16(notUndefined(this.stack[this.stackPointer]));
+        const stack = this.stack[this.stackPointer];
+
+        assertUndefined(stack);
+
+        this.programCounter = u16(stack);
         this.stackPointer--;
     }
 
@@ -240,58 +262,89 @@ export class Cpu {
 
     _addVxByte (args: { x: number, kk: number }): void {
         const { x, kk } = args;
-        this.registerV[x] = notUndefined(this.registerV[x]) + kk;
+
+        assertUndefined(this.registerV[x]);
+
+        this.registerV[x] += kk;
     }
     
     _ldVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] = notUndefined(this.registerV[y]);
+
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[x] = this.registerV[y];
     }
 
     _orVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] = notUndefined(this.registerV[x]) | notUndefined(this.registerV[y]);
+
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[x] |= this.registerV[y];
     }
 
     _andVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] = notUndefined(this.registerV[x]) & notUndefined(this.registerV[y]);
+
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[x] &= this.registerV[y];
     }
 
     _xorVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
-        this.registerV[x] = notUndefined(this.registerV[x]) ^ notUndefined(this.registerV[y]);
+
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[x] ^= this.registerV[y];
     }
 
     _addVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        this.registerV[0xF] = (notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]) > 0xFF) ? 1 : 0;
-        this.registerV[x] = notUndefined(this.registerV[x]) + notUndefined(this.registerV[y]);
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[0xF] = (this.registerV[x] + this.registerV[y] > 0xFF) ? 1 : 0;
+        this.registerV[x] += this.registerV[y];
     }
 
     _subVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        this.registerV[0xF] = (notUndefined(this.registerV[x]) > notUndefined(this.registerV[y])) ? 1 : 0;
-        this.registerV[x] = notUndefined(this.registerV[x]) - notUndefined(this.registerV[y]);
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[0xF] = (this.registerV[x] > this.registerV[y]) ? 1 : 0;
+        this.registerV[x] -= this.registerV[y];
     }
 
     _shrVx (x: number): void {
-        this.registerV[0xF] = (notUndefined(this.registerV[x]) & 0x1) ? 1 : 0;
-        this.registerV[x] = notUndefined(this.registerV[x]) >> 1;
+        assertUndefined(this.registerV[x]);
+
+        this.registerV[0xF] = (this.registerV[x] & 0x1) ? 1 : 0;
+        this.registerV[x] >>= 1;
     }
 
     _subnVxVy (args: { x: number, y: number }): void {
         const { x, y } = args;
 
-        this.registerV[0xF] = (notUndefined(this.registerV[y]) > notUndefined(this.registerV[x])) ? 1 : 0;
-        this.registerV[x] = notUndefined(this.registerV[y]) - notUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
+        this.registerV[0xF] = (this.registerV[y] > this.registerV[x]) ? 1 : 0;
+        this.registerV[x] = this.registerV[y] - this.registerV[x];
     }
 
     _shlVx (x: number): void {
-        this.registerV[0xF] = (notUndefined(this.registerV[x]) & 0x80) ? 1 : 0;
-        this.registerV[x] = notUndefined(this.registerV[x]) << 1;
+        assertUndefined(this.registerV[x]);
+
+        this.registerV[0xF] = (this.registerV[x] & 0x80) ? 1 : 0;
+        this.registerV[x] <<= 1;
     }
 
     _sneVxVy (args: { x: number, y: number }): void {
@@ -304,7 +357,9 @@ export class Cpu {
     }
 
     _jpV0Addr (nnn: number): void {
-        this.programCounter = u16(nnn + notUndefined(this.registerV[0]));
+        assertUndefined(this.registerV[0]);
+
+        this.programCounter = u16(nnn + this.registerV[0]);
     }
 
     _rndVxByte (args: { x: number, kk: number }): void {
@@ -317,13 +372,18 @@ export class Cpu {
         const { x, y, n } = args;
         this.registerV[0xf] = 0;
 
+        assertUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[y]);
+
         for (let byteOffset = 0; byteOffset < n; byteOffset++) {
             const byte = this.memory[this.indexRegisterI + byteOffset];
-            for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
-                if ((notUndefined(byte) & (0x80 >> bitOffset)) === 0) continue;
+            assertUndefined(byte);
 
-                const currX = (notUndefined(this.registerV[x]) + bitOffset) % DISPLAY_WIDTH;
-                const currY = (notUndefined(this.registerV[y]) + byteOffset) % DISPLAY_HEIGHT;
+            for (let bitOffset = 0; bitOffset < 8; bitOffset++) {
+                if ((byte & (0x80 >> bitOffset)) === 0) continue;
+
+                const currX = (this.registerV[x] + bitOffset) % DISPLAY_WIDTH;
+                const currY = (this.registerV[y] + byteOffset) % DISPLAY_HEIGHT;
 
                 const pixel = this.display.getDisplayPixel({ currY, currX });
                 const xor = (pixel ^ 1) as 0|1;
@@ -362,23 +422,33 @@ export class Cpu {
     }
 
     _ldDtVx (x: number): void {
-        this.delayTimer = u8(notUndefined(this.registerV[x]));
+        assertUndefined(this.registerV[x]);
+
+        this.delayTimer = u8(this.registerV[x]);
     }
 
     _ldStVx (x: number): void {
-        this.soundTimer = u8(notUndefined(this.registerV[x]));
+        assertUndefined(this.registerV[x]);
+
+        this.soundTimer = u8(this.registerV[x]);
     }
 
     _addIVx (x: number): void {
-        this.indexRegisterI = u16(this.indexRegisterI + notUndefined(this.registerV[x]));
+        assertUndefined(this.registerV[x]);
+  
+        this.indexRegisterI = u16(this.indexRegisterI + this.registerV[x]);
     }
 
     _ldFVx (x: number): void {
-        this.indexRegisterI = u16(notUndefined(this.registerV[x]) * 0x5);
+        assertUndefined(this.registerV[x]);
+
+        this.indexRegisterI = u16(this.registerV[x] * 0x5);
     }
 
     _ldBVx (x: number): void {
-        let v = notUndefined(this.registerV[x]);
+        assertUndefined(this.registerV[x]);
+
+        let v = this.registerV[x];
         const B = Math.floor(v / 100);
 
         v = v - B * 100;
@@ -394,13 +464,13 @@ export class Cpu {
 
     _ldIVx (x: number): void {
         for (let i = 0; i <= x; i++) {
-            this.memory[this.indexRegisterI + i] = notUndefined(this.registerV[i]);
+            this.memory[this.indexRegisterI + i] = this.registerV[i]!;
         }
     }
 
     _ldVxI (x: number): void {
         for (let i = 0; i <= x; i++) {
-            this.registerV[i] = notUndefined(this.memory[this.indexRegisterI + i]);
+            this.registerV[i] = this.memory[this.indexRegisterI + i]!;
         }
     }
  

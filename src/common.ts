@@ -15,7 +15,7 @@ export function u16 (value: number): u16 {
     return new Uint16Array([value])[0] as u16;
 }
 
-export function notUndefined <T> (value: T | undefined): T {
-    if (value === undefined) throw new Error('undefined value');
-    return value;
+export function assertUndefined (args: number|undefined): asserts args is number {
+    if (args === undefined) throw new Error('undefined assertion');
 }
+  

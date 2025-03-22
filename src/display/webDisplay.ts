@@ -1,7 +1,7 @@
 
 import { Display } from './abstractDisplay';
 import { KeyBoard } from '../keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, notUndefined } from '../common';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, assertUndefined } from '../common';
 
 export class WebDisplay extends Display {
     #displayBuffer: number[][];
@@ -33,13 +33,16 @@ export class WebDisplay extends Display {
 
     getDisplayPixel (args: { currY: number, currX: number }): 0|1 {
         const { currY, currX } = args;
-        return notUndefined(this.#displayBuffer[currY]?.[currX]) as 0|1;
+
+        assertUndefined(this.#displayBuffer[currY]?.[currX]);
+
+        return this.#displayBuffer[currY]?.[currX] as 0|1;
     }
 
     setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }): void {
         const { currY, currX, value } = args;
 
-        if (this.#displayBuffer[currY] === undefined || this.#displayBuffer[currY][currX] === undefined) throw new Error('invalid buffer access');
+        assertUndefined(this.#displayBuffer[currY]?.[currX]);
 
         this.#displayBuffer[currY][currX] = value;
     }
@@ -49,7 +52,7 @@ export class WebDisplay extends Display {
         for (let i = 0; i < DISPLAY_HEIGHT; i++) {
             displayBuffer[i] = [];
             for (let j = 0; j < DISPLAY_WIDTH; j++) {
-                notUndefined(displayBuffer[i]).push(0);
+                displayBuffer[i]!.push(0);
             }
         }
         return displayBuffer;
