@@ -1,6 +1,6 @@
 import pino from 'pino';
-import { Display } from './display/abstractDisplay';
-import { KeyBoard } from './keyboard';
+import { Display } from '@src/display/abstractDisplay';
+import { KeyBoard } from '@src/keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, assertUndefined } from './common';
 
 export class Cpu {
@@ -13,7 +13,7 @@ export class Cpu {
     stackPointer  : u8;
     delayTimer    : u8;
     soundTimer    : u8;
-    #fontset      : Uint8Array;
+    #fontset      : Readonly<Uint8Array>;
 
     // ディスプレイ
     display: Display;
@@ -52,7 +52,7 @@ export class Cpu {
         ]);
 
         this.keyboard = keyboard;
-        this.display = display;
+        this.display  = display;
 
         if(this.#debug) {
             this.#logger = pino({
@@ -69,7 +69,7 @@ export class Cpu {
     }
 
     // ROMを読み込む
-    readRom (romBuffer: Buffer<ArrayBufferLike>): void {
+    readRom (romBuffer: Readonly<Buffer<ArrayBufferLike>>): void {
         // 511バイトまでフォントセットを埋める
         let fontset: number|undefined;
         for (let i = 0; i < this.#fontset.length; i++) {
@@ -160,7 +160,7 @@ export class Cpu {
         };
     }
 
-    _handle8 (args: { x: number, y: number, opcode: number }): void {
+    _handle8 (args: Readonly<{ x: number, y: number, opcode: number }>): void {
         const { x, y, opcode } = args;
         switch (opcode & 0x000F) {
             case 0x0000: return this._ldVxVy({ x, y });
@@ -176,7 +176,7 @@ export class Cpu {
         };
     }
 
-    _handleE (args: { x: number, opcode: number }): void {
+    _handleE (args: Readonly<{ x: number, opcode: number }>): void {
         const { x, opcode } = args;
         switch (opcode & 0x00FF) {
             case 0x009E: return this._skpVx(x);
@@ -185,7 +185,7 @@ export class Cpu {
         };
     }
 
-    _handleF (args: { x: number, opcode: number }): void {
+    _handleF (args: Readonly<{ x: number, opcode: number }>): void {
         const { x, opcode } = args;
         switch (opcode & 0x00FF) {
             case 0x0007: return this._ldVxDt(x);
@@ -240,27 +240,27 @@ export class Cpu {
         this.programCounter = u16(nnn);
     }
 
-    _seVxByte (args: { x: number, kk: number }): void {
+    _seVxByte (args: Readonly<{ x: number, kk: number }>): void {
         const { x, kk } = args;
         if (this.registerV[x] === kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _sneVxByte (args: { x: number, kk: number }): void {
+    _sneVxByte (args: Readonly<{ x: number, kk: number }>): void {
         const { x, kk } = args;
         if (this.registerV[x] !== kk) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _seVxVy (args: { x: number, y: number }): void {
+    _seVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
         if (this.registerV[x] === this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
 
-    _ldVxByte (args: { x: number, kk: number }): void {
+    _ldVxByte (args: Readonly<{ x: number, kk: number }>): void {
         const { x, kk } = args;
         this.registerV[x] = kk;
     }
 
-    _addVxByte (args: { x: number, kk: number }): void {
+    _addVxByte (args: Readonly<{ x: number, kk: number }>): void {
         const { x, kk } = args;
 
         assertUndefined(this.registerV[x]);
@@ -268,7 +268,7 @@ export class Cpu {
         this.registerV[x] += kk;
     }
     
-    _ldVxVy (args: { x: number, y: number }): void {
+    _ldVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[y]);
@@ -276,7 +276,7 @@ export class Cpu {
         this.registerV[x] = this.registerV[y];
     }
 
-    _orVxVy (args: { x: number, y: number }): void {
+    _orVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -285,7 +285,7 @@ export class Cpu {
         this.registerV[x] |= this.registerV[y];
     }
 
-    _andVxVy (args: { x: number, y: number }): void {
+    _andVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -294,7 +294,7 @@ export class Cpu {
         this.registerV[x] &= this.registerV[y];
     }
 
-    _xorVxVy (args: { x: number, y: number }): void {
+    _xorVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -303,7 +303,7 @@ export class Cpu {
         this.registerV[x] ^= this.registerV[y];
     }
 
-    _addVxVy (args: { x: number, y: number }): void {
+    _addVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -313,7 +313,7 @@ export class Cpu {
         this.registerV[x] += this.registerV[y];
     }
 
-    _subVxVy (args: { x: number, y: number }): void {
+    _subVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -330,7 +330,7 @@ export class Cpu {
         this.registerV[x] >>= 1;
     }
 
-    _subnVxVy (args: { x: number, y: number }): void {
+    _subnVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
 
         assertUndefined(this.registerV[x]);
@@ -347,7 +347,7 @@ export class Cpu {
         this.registerV[x] <<= 1;
     }
 
-    _sneVxVy (args: { x: number, y: number }): void {
+    _sneVxVy (args: Readonly<{ x: number, y: number }>): void {
         const { x, y } = args;
         if (this.registerV[x] !== this.registerV[y]) this.programCounter = u16(this.programCounter + 2);
     }
@@ -362,13 +362,13 @@ export class Cpu {
         this.programCounter = u16(nnn + this.registerV[0]);
     }
 
-    _rndVxByte (args: { x: number, kk: number }): void {
+    _rndVxByte (args: Readonly<{ x: number, kk: number }>): void {
         const { x, kk } = args;
         this.registerV[x] = Math.floor(Math.random() * 0xFF) & kk;
     }
 
     // dもnも一緒に扱ってOK
-    _drwVxVyNibble (args: { x: number, y: number , n: number}): void {
+    _drwVxVyNibble (args:Readonly<{ x: number, y: number , n: number}>): void {
         const { x, y, n } = args;
         this.registerV[0xf] = 0;
 

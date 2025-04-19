@@ -1,10 +1,10 @@
 import * as fs from 'fs';
-import { Cpu } from '../cpu';
-import { CliDisplay } from '../display/cliDisplay';
-import { KeyBoard } from '../keyboard';
 import { assert } from 'chai';
 import { describe, it } from 'mocha';
-import { u8, u16 } from '../common';
+import { Cpu } from '@src/cpu';
+import { CliDisplay } from '@src/display/cliDisplay';
+import { KeyBoard } from '@src/keyboard';
+import { u8, u16 } from '@src/common';
 
 describe('order', () => {
     const keyboard = new KeyBoard();

@@ -1,6 +1,6 @@
-import { Cpu } from '../cpu';
-import { WebDisplay } from '../display/webDisplay';
-import { KeyBoard } from '../keyboard';
+import { Cpu } from '@src/cpu';
+import { WebDisplay } from '@src/display/webDisplay';
+import { KeyBoard } from '@src/keyboard';
 
 let keyboard = new KeyBoard();
 let display  = new WebDisplay(keyboard);

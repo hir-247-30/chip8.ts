@@ -1,6 +1,6 @@
 import blessed from 'blessed';
-import { Display } from './abstractDisplay';
-import { KeyBoard } from '../keyboard';
+import { Display } from '@src/display/abstractDisplay';
+import { KeyBoard } from '@src/keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, assertUndefined } from '../common';
 
 export class CliDisplay extends Display {
@@ -17,11 +17,11 @@ export class CliDisplay extends Display {
         });
         this.screen.title = 'CHIP-8 Emulator';
         this.screenBox = blessed.box({
-            top: 'center',
+            top : 'center',
             left: 'center',
             wrap: false,
             // なぜ？？
-            width: DISPLAY_WIDTH + 2,
+            width : DISPLAY_WIDTH + 2,
             height: DISPLAY_HEIGHT + 2,
             border: {
               type: 'line',
@@ -50,7 +50,7 @@ export class CliDisplay extends Display {
         return this.#displayBuffer;
     }
 
-    getDisplayPixel (args: { currY: number, currX: number }): 0|1 {
+    getDisplayPixel (args: Readonly<{ currY: number, currX: number }>): 0|1 {
         const { currY, currX } = args;
 
         assertUndefined(this.#displayBuffer[currY]?.[currX]);
@@ -58,7 +58,7 @@ export class CliDisplay extends Display {
         return this.#displayBuffer[currY]?.[currX] as 0|1;
     }
 
-    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }): void {
+    setDisplayPixel (args: Readonly<{ currY: number, currX: number, value: 0|1 }>): void {
         const { currY, currX, value } = args;
 
         assertUndefined(this.#displayBuffer[currY]?.[currX]);

@@ -1,6 +1,6 @@
 export class KeyBoard {
-    #keyInput: number|null = null;
-    #keyboardMapper = new Map([
+    #keyInput      : number|null = null;
+    #keyboardMapper: Readonly<Map<string, number>> = new Map([
         ['1', 0x1], ['2', 0x2], ['3', 0x3], ['4', 0xC],
         ['q', 0x4], ['w', 0x5], ['e', 0x6], ['r', 0xD],
         ['a', 0x7], ['s', 0x8], ['d', 0x9], ['f', 0xE],

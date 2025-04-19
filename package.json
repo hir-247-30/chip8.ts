@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/main/cli.ts",
-    "test": "npx tsc --noEmit && npx eslint . --ext .ts && mocha -r tsx 'src/test/**/*.ts'",
+    "test": "npx tsc --noEmit && npx eslint . --ext .ts && mocha -r tsx 'src/test/**/*.ts' --exit",
     "format": "npx eslint . --fix --ext .ts",
     "web": "npx tsc --noEmit && node esbuild.config.mjs && cp -r rom/* public/"
   },

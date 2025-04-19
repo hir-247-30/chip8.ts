@@ -1,13 +1,12 @@
-
-import { Display } from './abstractDisplay';
-import { KeyBoard } from '../keyboard';
+import { Display } from '@src/display/abstractDisplay';
+import { KeyBoard } from '@src/keyboard';
 import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, assertUndefined } from '../common';
 
 export class WebDisplay extends Display {
     #displayBuffer: number[][];
-    #canvas: HTMLCanvasElement;
-    #ctx: CanvasRenderingContext2D;
-    #zoom: number = 10;
+    #canvas       : HTMLCanvasElement;
+    #ctx          : CanvasRenderingContext2D;
+    #zoom         : Readonly<number> = 10;
 
     constructor (keyboard: KeyBoard) {
         super();
@@ -31,7 +30,7 @@ export class WebDisplay extends Display {
         return this.#displayBuffer;
     }
 
-    getDisplayPixel (args: { currY: number, currX: number }): 0|1 {
+    getDisplayPixel (args: Readonly<{ currY: number, currX: number }>): 0|1 {
         const { currY, currX } = args;
 
         assertUndefined(this.#displayBuffer[currY]?.[currX]);
@@ -39,7 +38,7 @@ export class WebDisplay extends Display {
         return this.#displayBuffer[currY]?.[currX] as 0|1;
     }
 
-    setDisplayPixel (args: { currY: number, currX: number, value: 0|1 }): void {
+    setDisplayPixel (args: Readonly<{ currY: number, currX: number, value: 0|1 }>): void {
         const { currY, currX, value } = args;
 
         assertUndefined(this.#displayBuffer[currY]?.[currX]);

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { Cpu } from '../cpu';
-import { CliDisplay } from '../display/cliDisplay';
-import { KeyBoard } from '../keyboard';
+import { Cpu } from '@src/cpu';
+import { CliDisplay } from '@src/display/cliDisplay';
+import { KeyBoard } from '@src/keyboard';
 
 let romBuffer: Buffer<ArrayBufferLike>;
 try {
