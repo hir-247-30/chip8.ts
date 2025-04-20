@@ -1,6 +1,6 @@
 import { Display } from '@src/display/abstractDisplay';
 import { KeyBoard } from '@src/keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, assertUndefined } from '../common';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, FOREGROUND_COLOR, BACKGROUND_COLOR, assertUndefined } from '@src/common';
 
 export class WebDisplay extends Display {
     #displayBuffer: number[][];

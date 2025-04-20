@@ -1,7 +1,7 @@
 import pino from 'pino';
 import { Display } from '@src/display/abstractDisplay';
 import { KeyBoard } from '@src/keyboard';
-import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, assertUndefined } from './common';
+import { DISPLAY_WIDTH, DISPLAY_HEIGHT, u8, u16, assertUndefined } from '@src/common';
 
 export class Cpu {
     // レジスタ定義
@@ -16,7 +16,7 @@ export class Cpu {
     #fontset      : Readonly<Uint8Array>;
 
     // ディスプレイ
-    display: Display;
+    display : Display;
     keyboard: KeyBoard;
 
     #debug : boolean = false;
@@ -368,7 +368,7 @@ export class Cpu {
     }
 
     // dもnも一緒に扱ってOK
-    _drwVxVyNibble (args:Readonly<{ x: number, y: number , n: number}>): void {
+    _drwVxVyNibble (args: Readonly<{ x: number, y: number , n: number}>): void {
         const { x, y, n } = args;
         this.registerV[0xf] = 0;
 

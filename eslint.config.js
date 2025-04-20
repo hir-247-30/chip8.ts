@@ -1,16 +1,16 @@
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    files: ["**/*.ts"],
+    files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,
       ...tseslint.configs.recommended,
     ],
     rules: {
-        "semi": "error",
-        "space-before-function-paren": "error"
+      'semi': 'error',
+      'space-before-function-paren': 'error'
     },
     languageOptions: {
       sourceType: 'module',
