@@ -11,27 +11,30 @@
     "web": "npx tsc --noEmit && node esbuild.config.mjs && cp -r rom/* public/"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=24.0.0",
     "npm": ">=10.0.0"
   },
   "author": "hir-247-30",
   "license": "ISC",
   "devDependencies": {
-    "@tsconfig/recommended": "^1.0.8",
-    "@types/blessed": "^0.1.25",
-    "@types/chai": "^5.0.1",
+    "@tsconfig/recommended": "^1.0.13",
+    "@types/blessed": "^0.1.27",
+    "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.13.1",
-    "esbuild": "^0.25.0",
-    "eslint": "^9.21.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.24.1"
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.8.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "chai": "^5.2.0",
-    "mocha": "^11.1.0",
-    "pino": "^9.6.0",
-    "tsx": "^4.19.2"
+    "chai": "^6.2.2",
+    "mocha": "^11.8.0",
+    "pino": "^10.3.1",
+    "tsx": "^4.23.12"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }
