@@ -5,7 +5,11 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -164,8 +168,8 @@ var require_browser = __commonJS({
     function levelToValue(level, logger) {
       return level === "silent" ? Infinity : logger.levels.values[level];
     }
-    var baseLogFunctionSymbol = Symbol("pino.logFuncs");
-    var hierarchySymbol = Symbol("pino.hierarchy");
+    var baseLogFunctionSymbol = /* @__PURE__ */ Symbol("pino.logFuncs");
+    var hierarchySymbol = /* @__PURE__ */ Symbol("pino.hierarchy");
     var logFallbackMap = {
       error: "log",
       fatal: "error",
@@ -236,7 +240,9 @@ var require_browser = __commonJS({
         transmit: transmit2,
         serialize,
         asObject: opts.browser.asObject,
+        asObjectBindingsOnly: opts.browser.asObjectBindingsOnly,
         formatters: opts.browser.formatters,
+        reportCaller: opts.browser.reportCaller,
         levels,
         timestamp: getTimeFunction(opts),
         messageKey: opts.messageKey || "msg",
@@ -244,6 +250,12 @@ var require_browser = __commonJS({
       };
       logger.levels = getLevels(opts);
       logger.level = level;
+      logger.isLevelEnabled = function(level2) {
+        if (!this.levels.values[level2]) {
+          return false;
+        }
+        return this.levels.values[level2] >= this.levels.values[this.level];
+      };
       logger.setMaxListeners = logger.getMaxListeners = logger.emit = logger.addListener = logger.on = logger.prependListener = logger.once = logger.prependOnceListener = logger.removeListener = logger.removeAllListeners = logger.listeners = logger.listenerCount = logger.eventNames = logger.write = logger.flush = noop;
       logger.serializers = serializers;
       logger._serialize = serialize;
@@ -390,7 +402,7 @@ var require_browser = __commonJS({
       };
     }
     function createWrap(self2, opts, rootLogger, level) {
-      return /* @__PURE__ */ function(write) {
+      return /* @__PURE__ */ (function(write) {
         return function LOG() {
           const ts = opts.timestamp();
           const args = new Array(arguments.length);
@@ -402,8 +414,25 @@ var require_browser = __commonJS({
             argsIsSerialized = true;
           }
           if (opts.asObject || opts.formatters) {
-            write.call(proto, asObject(this, level, args, ts, opts));
-          } else write.apply(proto, args);
+            const out = asObject(this, level, args, ts, opts);
+            if (opts.reportCaller && out && out.length > 0 && out[0] && typeof out[0] === "object") {
+              try {
+                const caller = getCallerLocation();
+                if (caller) out[0].caller = caller;
+              } catch (e) {
+              }
+            }
+            write.call(proto, ...out);
+          } else {
+            if (opts.reportCaller) {
+              try {
+                const caller = getCallerLocation();
+                if (caller) args.push(caller);
+              } catch (e) {
+              }
+            }
+            write.apply(proto, args);
+          }
           if (opts.transmit) {
             const transmitLevel = opts.transmit.level || self2._level;
             const transmitValue = levelToValue(transmitLevel, rootLogger);
@@ -420,7 +449,7 @@ var require_browser = __commonJS({
             }, args, argsIsSerialized);
           }
         };
-      }(self2[baseLogFunctionSymbol][level]);
+      })(self2[baseLogFunctionSymbol][level]);
     }
     function asObject(logger, level, args, ts, opts) {
       const {
@@ -430,6 +459,8 @@ var require_browser = __commonJS({
       const argsCloned = args.slice();
       let msg = argsCloned[0];
       const logObject = {};
+      let lvl = (logger._childLevel | 0) + 1;
+      if (lvl < 1) lvl = 1;
       if (ts) {
         logObject.time = ts;
       }
@@ -439,17 +470,25 @@ var require_browser = __commonJS({
       } else {
         logObject.level = logger.levels.values[level];
       }
-      let lvl = (logger._childLevel | 0) + 1;
-      if (lvl < 1) lvl = 1;
-      if (msg !== null && typeof msg === "object") {
-        while (lvl-- && typeof argsCloned[0] === "object") {
-          Object.assign(logObject, argsCloned.shift());
+      if (opts.asObjectBindingsOnly) {
+        if (msg !== null && typeof msg === "object") {
+          while (lvl-- && typeof argsCloned[0] === "object") {
+            Object.assign(logObject, argsCloned.shift());
+          }
         }
-        msg = argsCloned.length ? format(argsCloned.shift(), argsCloned) : void 0;
-      } else if (typeof msg === "string") msg = format(argsCloned.shift(), argsCloned);
-      if (msg !== void 0) logObject[opts.messageKey] = msg;
-      const formattedLogObject = logObjectFormatter(logObject);
-      return formattedLogObject;
+        const formattedLogObject = logObjectFormatter(logObject);
+        return [formattedLogObject, ...argsCloned];
+      } else {
+        if (msg !== null && typeof msg === "object") {
+          while (lvl-- && typeof argsCloned[0] === "object") {
+            Object.assign(logObject, argsCloned.shift());
+          }
+          msg = argsCloned.length ? format(argsCloned.shift(), argsCloned) : void 0;
+        } else if (typeof msg === "string") msg = format(argsCloned.shift(), argsCloned);
+        if (msg !== void 0) logObject[opts.messageKey] = msg;
+        const formattedLogObject = logObjectFormatter(logObject);
+        return [formattedLogObject];
+      }
     }
     function applySerializers(args, serialize, serializers, stdErrSerialize) {
       for (const i in args) {
@@ -558,6 +597,27 @@ var require_browser = __commonJS({
     }
     module.exports.default = pino2;
     module.exports.pino = pino2;
+    function getCallerLocation() {
+      const stack = new Error().stack;
+      if (!stack) return null;
+      const lines = stack.split("\n");
+      for (let i = 1; i < lines.length; i++) {
+        const l = lines[i].trim();
+        if (/(^at\s+)?(createWrap|LOG|set\s*\(|asObject|Object\.apply|Function\.apply)/.test(l)) continue;
+        if (l.indexOf("browser.js") !== -1) continue;
+        if (l.indexOf("node:internal") !== -1) continue;
+        if (l.indexOf("node_modules") !== -1) continue;
+        let m = l.match(/\((.*?):(\d+):(\d+)\)/);
+        if (!m) m = l.match(/at\s+(.*?):(\d+):(\d+)/);
+        if (m) {
+          const file = m[1];
+          const line = m[2];
+          const col = m[3];
+          return file + ":" + line + ":" + col;
+        }
+      }
+      return null;
+    }
   }
 });
 
@@ -789,7 +849,9 @@ var Cpu = class {
       }
     } catch (e) {
       console.log(e);
-      throw new Error(`invalid opcode ${hexOrder}`);
+      throw new Error(`invalid opcode ${hexOrder}`, {
+        cause: e
+      });
     }
   }
   _handle0(opcode) {
