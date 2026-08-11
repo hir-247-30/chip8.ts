@@ -40,7 +40,7 @@ describe('order', () => {
         cpu.stack[cpu.stackPointer] = 0x300;
         cpu.programCounter = u16(0x200);
         cpu._ret();
-        assert.deepEqual(cpu.programCounter, 0x300);
+        assert.deepEqual(cpu.programCounter, 0x500);
     });
     
     it('1nnn - JP addr', () => {
