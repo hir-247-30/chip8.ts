@@ -148,7 +148,9 @@ export class Cpu {
             }
         } catch (e: unknown) {
             console.log(e);
-            throw new Error(`invalid opcode ${hexOrder}`);
+                throw new Error(`invalid opcode ${hexOrder}`, {
+                    cause: e
+                });
         }
     }
 

@@ -17,6 +17,7 @@
   "author": "hir-247-30",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tsconfig/recommended": "^1.0.13",
     "@types/blessed": "^0.1.27",
     "@types/chai": "^5.2.3",
